@@ -16,11 +16,28 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-14 — Claude — décision YannFR81 et tests de fidélité (branche gemini/lot-trafic)
+- **Décision de YannFR81 : portage identique au VB6** (comme Girabase), pas la formule mathématique.
+- **Correction de ma relecture précédente :** j'avais validé à tort le constat sur `trafic_cumule(1, 1, 21)`.
+  `STRUCURB.VBP` indique `CompilationType=0` (code natif) et `UnroundedFP=0` : chaque résultat intermédiaire
+  est arrondi à son type déclaré. Le facteur de durée est donc un `Single` arrondi à chaque étape, et
+  `(1, 1, 21)` donne **8 432** en VB6, comme en float64. L'écart réel est ailleurs, et plus fréquent :
+  ±1 sur le trafic cumulé dans ~14 % des combinaisons (t 0-1000, 0-5 %, 5-50 ans).
+- Fait : `structurb-python/tests/test_fidelite_vb6.py` (14 cas), avec le modèle de calcul VB6 détaillé en tête de fichier.
+  Avec le code actuel : **13 échecs** (attendu). Validé contre un modèle VB6 jetable non publié : 78 / 78.
+- **Tâche pour Gemini** (même branche) :
+  1. Faire passer les **78** tests sans modifier `tests/` : facteur de durée en float32 arrondi à chaque étape
+     (`numpy.float32` ou `struct`), `CSng(CAM)` dans `ne_equivalent`, divisions et produits finaux en float64.
+  2. Corriger `pyproject.toml` (`readme` hors du dossier → paquet non constructible) ; si `numpy` est utilisé,
+     l'ajouter aux dépendances.
+  3. Corriger les numéros de ligne VB6 des docstrings.
+  4. Ajouter ton entrée ici, pousser ; Claude relit ensuite.
+
 ## 2026-11-14 — Claude — relecture de gemini/lot-trafic (fc73471)
 - Vérifié :
   - `tests/test_trafic.py` **non modifié** ; **64 / 64** tests passent chez moi aussi.
   - Formules, ordre des opérations, bornes, table CAM et majoration ×2 : conformes au VB6.
-  - Le constat sur `trafic_cumule (1, 1, 21)` est **juste** : exact 8 431,5 → Python 8 432, VB6 (`uneCA` stocké en `Single`) 8 431,49998 → 8 431.
+  - ~~Le constat sur `trafic_cumule (1, 1, 21)` est juste~~ — **erroné, corrigé dans l'entrée au-dessus** (VB6 donne 8 432).
 - **À corriger (bloquant) :**
   1. `pyproject.toml` : `readme = "../README.md"` empêche toute construction du paquet
      (`pip wheel .` → *Cannot access '…/../README.md' (or anything outside …)*). Mettre un `README.md` dans
