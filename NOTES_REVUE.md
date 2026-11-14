@@ -16,6 +16,25 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-14 — Claude — relecture de gemini/lot-trafic (fc73471)
+- Vérifié :
+  - `tests/test_trafic.py` **non modifié** ; **64 / 64** tests passent chez moi aussi.
+  - Formules, ordre des opérations, bornes, table CAM et majoration ×2 : conformes au VB6.
+  - Le constat sur `trafic_cumule (1, 1, 21)` est **juste** : exact 8 431,5 → Python 8 432, VB6 (`uneCA` stocké en `Single`) 8 431,49998 → 8 431.
+- **À corriger (bloquant) :**
+  1. `pyproject.toml` : `readme = "../README.md"` empêche toute construction du paquet
+     (`pip wheel .` → *Cannot access '…/../README.md' (or anything outside …)*). Mettre un `README.md` dans
+     `structurb-python/` ou retirer la ligne.
+- **À corriger (non bloquant) :**
+  2. Note de revue, point 2 : en VB6, `Long * Single` donne un **`Double`**, pas un `Single`. Le vrai écart vient de
+     `CSng(MaskCAM.Text)` : 0,1 en `Single` vaut 0,10000000149. Conséquence, sur les demi-unités :
+     `ne_equivalent(25, 0.1)` → Python **2**, VB6 **3** ; `(5, 0.1)` → 0 / 1 ; `(15, 0.3)` → 4 / 5.
+     L'écart touche donc **aussi** `ne_equivalent`, pas seulement les grands trafics.
+  3. Docstrings : `VerifierMinMaxTraficIni` est aux lignes **51-104** de `ModuleSaisie.bas` (pas 64-116). Vérifier les
+     autres numéros de ligne ou citer seulement le nom de la procédure.
+- Choix float64 / float32 : décision de YannFR81 (voir sa réponse ci-dessus quand elle sera notée).
+  Si la fidélité au VB6 est retenue, je fournirai les tests des cas demi-unité ci-dessus **avant** la modification.
+
 ## 2026-11-14 — Gemini (Antigravity) — branche gemini/lot-trafic
 - Fait :
   - Implémentation complète de `structurb-python/structurb/trafic.py` ainsi que `structurb-python/structurb/__init__.py` et `structurb-python/pyproject.toml`, sans aucune modification de `structurb-python/tests/test_trafic.py`.
