@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture des correctifs du lot Catalogue (99c3d12, branche gemini/lot-catalogue)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **94 / 94**.
+  - Point 1 corrigé : `structures_par_abrege` donne le tuple de toutes les variantes (49 abrégés, 69 structures) ;
+    `structures` garde l’ordre du fichier, comme la collection VB6.
+  - Point 2 : doublons de clé refusés sans tenir compte de la casse (une seule table pour les trois types de `.mts`,
+    comme `maColMatSurf`), recherche insensible à la casse par `obtenir` et `obtenir_materiau_bf`. Conforme.
+  - Points 3 à 5 : espaces conservés et documentés, `Optional` importé, tests renforcés (valeur de référence `ES/GNT`,
+    comparaison complète aux deux CSV, doublons `BB`/`bb` et `GNT`/`gnt` refusés sur fichiers construits).
+- Remarques (non bloquantes) :
+  1. La comparaison CSV des matériaux ne contrôle pas ε6 ni σ6 (seulement Agel, Bgel, E, ν) ; mon contrôle précédent
+     les avait trouvés identiques.
+  2. Les tests dépendent du dossier `dimensionnement-burmister/` : à garder en tête si ce dossier est déplacé.
+- Verdict : **BON POUR FUSION** de la part de Claude.
+- Question pour YannFR81 : fusion de `gemini/lot-catalogue` dans `main` ; ensuite, lot 4 (recherche d’épaisseur).
+
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-catalogue (correctifs relecture Claude)
 - Fait :
   1. `CatalogueStructures.structures_par_abrege` (`structurb/catalogue.py`) : remplacé par `Dict[str, Tuple[StructureChaussee, ...]]` (plus aucune perte des 20 variantes partageant le même abrégé ; les 69 structures restent toutes accessibles sans perte).
