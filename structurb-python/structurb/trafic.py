@@ -1,14 +1,17 @@
-"""Calculs du lot Trafic et CAM de Struct-Urb (portage fidèle du code VB6).
+"""Calculs du lot Trafic et CAM de Struct-Urb (portage fidèle du code VB6 compilé).
 
 Références VB6 d'origine (CEREMA/territoires-ville.StructUrb) :
-- ``ModuleMain.bas`` : ``CalculerTraficCum``, ``CalculerTraficIni``,
-  ``DonnerCroissAn``, ``DonnerMinMaxTraficIni``, ``DonnerPrecMinMaxCAM`` ;
-- ``ModuleSaisie.bas`` : ``VerifierMinMaxTraficIni``, ``VerifierMinMaxCAM`` ;
-- ``frmDocument.frm`` : ``CalculerEtAfficherNE``.
+- ``ModuleMain.bas`` : ``CalculerTraficCum`` (lignes 2082-2097),
+  ``CalculerTraficIni`` (lignes 2099-2168), ``DonnerCroissAn`` (lignes 2170-2181),
+  ``DonnerMinMaxTraficIni`` (lignes 2183-2210), ``DonnerPrecMinMaxCAM`` (lignes 2212-2306) ;
+- ``ModuleSaisie.bas`` : ``VerifierMinMaxTraficIni`` (lignes 51-104),
+  ``VerifierMinMaxCAM`` (lignes 127-144) ;
+- ``frmDocument.frm`` : ``CalculerEtAfficherNE`` (lignes 3975-4052).
 """
 
 from __future__ import annotations
 
+import struct
 from typing import Optional, Tuple
 
 # Types de voies gérés par Struct-Urb (ModuleMain.bas : constantes TypeVoie* / TypeGiratoire*)
@@ -58,6 +61,11 @@ _TABLE_CAM: dict[Tuple[str, int], Tuple[float, float, float]] = {
 NE_MAX_LIMITE: int = 10_000_000
 
 
+def _vb_csng(x: float | int) -> float:
+    """Convertit un nombre en flottant simple précision IEEE 754 (``Single`` / ``CSng`` en VB6)."""
+    return struct.unpack("f", struct.pack("f", float(x)))[0]
+
+
 def vb_clng(x: float | int) -> int:
     """Arrondit un nombre à l'entier pair le plus proche (comportement de ``CLng`` en VB6).
 
@@ -91,12 +99,27 @@ def _valider_type_voie(type_voie: str) -> None:
         )
 
 
+def _facteur_duree_vb6(croissance_pct: int, duree: int) -> float:
+    """Calcule ``(uneDS + (uneCA * uneDS * (uneDS - 1)) / 2)`` en arithmétique ``Single`` VB6.
+
+    Dans ``STRUCURB.VBP`` (``CompilationType=0``, ``UnroundedFP=0``), ``uneCA`` est un ``Single``
+    et chaque opération intermédiaire de ce facteur est arrondie en ``Single`` (float32).
+    """
+    une_ca = _vb_csng(croissance_pct / 100.0)
+    terme = _vb_csng(une_ca * duree)
+    terme = _vb_csng(terme * (duree - 1))
+    terme = _vb_csng(terme / 2.0)
+    return _vb_csng(duree + terme)
+
+
 def trafic_cumule(t_ini: int, croissance_pct: int, duree: int) -> int:
     """Calcule le trafic cumulé poids lourds sur la durée de service (croissance linéaire).
 
     Formule VB6 :
         ``CLng(365# * unTini * (uneDS + (uneCA * uneDS * (uneDS - 1)) / 2))``
-    où ``uneCA = croissance_pct / 100``.
+    où ``uneCA = DonnerCroissAn(uneForm) / 100`` est un ``Single`` (float32),
+    le facteur de durée est évalué en ``Single`` à chaque étape, puis multiplié
+    en ``Double`` par ``365# * unTini``.
 
     Référence VB6 : ``ModuleMain.bas :: CalculerTraficCum`` (lignes 2082-2097).
     """
@@ -105,8 +128,8 @@ def trafic_cumule(t_ini: int, croissance_pct: int, duree: int) -> int:
         raise ValueError(f"La durée de service doit être strictement positive (reçu : {duree!r}).")
     if t_ini < 0:
         raise ValueError(f"Le trafic initial doit être positif ou nul (reçu : {t_ini!r}).")
-    une_ca = croissance_pct / 100.0
-    return vb_clng(365.0 * t_ini * (duree + (une_ca * duree * (duree - 1)) / 2.0))
+    facteur = _facteur_duree_vb6(croissance_pct, duree)
+    return vb_clng((365.0 * t_ini) * facteur)
 
 
 def trafic_initial(t_cum: int, croissance_pct: int, duree: int) -> int:
@@ -114,6 +137,8 @@ def trafic_initial(t_cum: int, croissance_pct: int, duree: int) -> int:
 
     Formule VB6 :
         ``CLng(unTCum / 365# / (uneDS + (uneCA * uneDS * (uneDS - 1)) / 2))``
+    où le facteur de durée est évalué en ``Single`` (float32) et les divisions
+    sont effectuées en ``Double`` (float64).
 
     Référence VB6 : ``ModuleMain.bas :: CalculerTraficIni`` (lignes 2099-2168,
     en particulier ligne 2121).
@@ -123,8 +148,8 @@ def trafic_initial(t_cum: int, croissance_pct: int, duree: int) -> int:
         raise ValueError(f"La durée de service doit être strictement positive (reçu : {duree!r}).")
     if t_cum < 0:
         raise ValueError(f"Le trafic cumulé doit être positif ou nul (reçu : {t_cum!r}).")
-    une_ca = croissance_pct / 100.0
-    return vb_clng(t_cum / 365.0 / (duree + (une_ca * duree * (duree - 1)) / 2.0))
+    facteur = _facteur_duree_vb6(croissance_pct, duree)
+    return vb_clng((t_cum / 365.0) / facteur)
 
 
 def bornes_trafic_initial(type_voie: str) -> Tuple[int, int, int, int]:
@@ -145,7 +170,7 @@ def statut_trafic_initial(t_ini: int, type_voie: str) -> str:
     - ``"hors_domaine"`` si ``t_ini < min_tolere`` ou ``t_ini > max_tolere``.
 
     Référence VB6 : ``ModuleMain.bas :: CalculerTraficIni`` (lignes 2129-2164)
-    et ``ModuleSaisie.bas :: VerifierMinMaxTraficIni`` (lignes 64-116).
+    et ``ModuleSaisie.bas :: VerifierMinMaxTraficIni`` (lignes 51-104).
     """
     min_tol, min_val, max_val, max_tol = bornes_trafic_initial(type_voie)
     if t_ini < min_tol or t_ini > max_tol:
@@ -166,7 +191,7 @@ def etude_labo_conseillee(t_ini: int, type_voie: str) -> bool:
     - ``"giratoire_trafic_lourd"`` (giratoire sur voie principale PL).
 
     Référence VB6 : ``ModuleMain.bas :: CalculerTraficIni`` (lignes 2144-2153)
-    et ``ModuleSaisie.bas :: VerifierMinMaxTraficIni`` (lignes 91-99).
+    et ``ModuleSaisie.bas :: VerifierMinMaxTraficIni`` (lignes 79-87).
     """
     _, _, max_val, max_tol = bornes_trafic_initial(type_voie)
     if not (max_val < t_ini <= max_tol):
@@ -175,12 +200,15 @@ def etude_labo_conseillee(t_ini: int, type_voie: str) -> bool:
 
 
 def ne_equivalent(t_cum: int, cam: float) -> int:
-    """Calcule le nombre d'essieux équivalents ``NE = CLng(TCum * CAM)``.
+    """Calcule le nombre d'essieux équivalents ``NE = CLng(CLng(TCum) * CSng(CAM))``.
+
+    En VB6, le CAM est converti en ``Single`` (``CSng``), puis le produit ``Long * Single``
+    est promu en ``Double`` avant l'arrondi ``CLng``.
 
     Référence VB6 : ``frmDocument.frm :: CalculerEtAfficherNE`` (ligne 3986 :
     ``unNEEquiv = CLng(CLng(TextTrafCUM.Text) * CSng(MaskCAM.Text))``).
     """
-    return vb_clng(t_cum * cam)
+    return vb_clng(int(t_cum) * _vb_csng(cam))
 
 
 def ne_hors_limite(ne: int) -> bool:

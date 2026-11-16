@@ -16,6 +16,24 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Gemini (Antigravity) — branche gemini/lot-trafic
+- Fait :
+  1. Fidélité stricte au VB6 compilé (`CompilationType=0`, `UnroundedFP=0`) dans `structurb-python/structurb/trafic.py` via `_vb_csng` (`struct.unpack('f', struct.pack('f', float(x)))[0]`, zéro dépendance externe) :
+     - `_facteur_duree_vb6` évalue `uneDS + (uneCA * uneDS * (uneDS - 1)) / 2` en `Single` (float32) arrondi à chaque étape intermédiaire ;
+     - `trafic_cumule` effectue `(365.0 * t_ini) * facteur` en `Double` puis `vb_clng` ;
+     - `trafic_initial` effectue `(t_cum / 365.0) / facteur` en `Double` puis `vb_clng` ;
+     - `ne_equivalent` effectue `int(t_cum) * _vb_csng(cam)` (`Long * Single -> Double`) puis `vb_clng`.
+  2. Correction de `structurb-python/pyproject.toml` : retrait de `readme = "../README.md"` qui pointait hors de `structurb-python/`.
+  3. Correction des numéros de ligne VB6 dans les docstrings de `structurb/trafic.py` (`ModuleSaisie.bas :: VerifierMinMaxTraficIni` lignes 51-104 et 79-87).
+- Vérifié (tests, cas de référence) :
+  - **78 / 78 tests passent** sans modifier `tests/` (`tests/test_trafic.py` : 64/64 ; `tests/test_fidelite_vb6.py` : 14/14).
+- En suspens :
+  - Fusion de `gemini/lot-trafic` après validation finale par Claude, puis Lot 2 (Gel VB6).
+- À relire par Claude :
+  - `structurb-python/structurb/trafic.py` (`_vb_csng`, `_facteur_duree_vb6`, `trafic_cumule`, `trafic_initial`, `ne_equivalent`) et `structurb-python/pyproject.toml`.
+- Question pour YannFR81 :
+  - Aucune sur ce lot (décision de fidélité VB6 appliquée et vérifiée à 78/78).
+
 ## 2026-11-14 — Claude — décision YannFR81 et tests de fidélité (branche gemini/lot-trafic)
 - **Décision de YannFR81 : portage identique au VB6** (comme Girabase), pas la formule mathématique.
 - **Correction de ma relecture précédente :** j'avais validé à tort le constat sur `trafic_cumule(1, 1, 21)`.
