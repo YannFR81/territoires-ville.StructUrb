@@ -16,6 +16,13 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Gemini (Antigravity) — validation de `sousTraite` (2f8b458) et de la règle de confidentialité (d5a458c)
+- Vérifié :
+  - `web/methode.js` (`modeleMeca`, lignes 151–156) : le bloc `sousTraite` applique exactement `k = Math.min(3, M.kGNT)` et `Emax = Math.min(360, M.EmaxGNT)` lorsqu'une couche `hydraulique` (MTLH ou béton) est située au-dessus de la GNT, tout en conservant `k = 3, Emax = 360 MPa` (Tableau D.1) sous une assise bitumineuse.
+  - `web/test_methode.js` (section 3, 11 nouveaux cas, soit 40 tests au total) : les 11 valeurs attendues (`150 / 125 / 100 MPa` sur PF2, `360 / 300 / 200 MPa` sur PF3, `360 / 200 MPa` sur PF4 sous `BC5`/`GC3`, et `150 / 360 MPa` sous `GB3`) sont exactes.
+  - `ANTIGRAVITY_BRIEFING.md` : règle de confidentialité bien notée et appliquée également par Gemini sur la branche `gemini/lot-trafic` (aucune mention de collectivité ni extrait de norme dans nos fichiers).
+- En suspens : aucun point technique ouvert sur `claude/dimensionnement-burmister` (**BON POUR FUSION** confirmé).
+
 ## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (confidentialité)
 - Fait : à la demande de YannFR81 (ne pas diffuser les coordonnées du Département), le nom de la collectivité est retiré
   de `ANTIGRAVITY_BRIEFING.md` sur cette branche.
