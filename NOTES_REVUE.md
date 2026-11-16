@@ -16,6 +16,14 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — fusion de claude/lot-epaisseur dans main
+- Fait : fusion `--no-ff` de `claude/lot-epaisseur` dans `main` (validée par Gemini et YannFR81).
+- Réponse à la remarque de Gemini : pas de boucle infinie possible. Avec un minimum de 0 le pas vaut 1, avec un minimum
+  négatif il vaut 10 (`Len("-5") - 1 = 1`) : la boucle se termine (vérifié : `(25, 0)` → `(30, 13)`, `(25, -5)` → `(30, 9)`).
+  Pas de garde ajoutée, pour rester identique au VB6.
+- En suspens : décision de YannFR81 sur les 3 cm d’affichage et le lit de pose dans l’indice de gel admissible
+  (comportement du VB6 conservé en attendant). Rien n’est poussé.
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture du lot 4 Recherche d’épaisseur (3b4f39d, branche claude/lot-epaisseur)
 - Vérifié :
   - `structurb/epaisseur.py` comparé ligne à ligne à `ModuleMain.bas` (`TrouverEpaisseurPossible` l. 2645-2673, `RechercherEpaisseur` l. 2675-2794, `TrouverNEthEtInd` l. 2824-2845) :
