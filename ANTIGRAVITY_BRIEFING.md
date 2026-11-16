@@ -1,7 +1,7 @@
 # Briefing pour Antigravity (Gemini) — binôme avec Claude
 
 > À coller dans Antigravity au début d'une session, ou à placer à la racine de l'espace de travail.
-> Propriétaire : **YannFR81**, projeteur routier (Département du Tarn), utilisateur d'AutoCAD / COVADIS.
+> Propriétaire : **YannFR81**, projeteur routier dans un conseil départemental, utilisateur d'AutoCAD / COVADIS.
 
 ---
 

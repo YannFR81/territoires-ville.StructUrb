@@ -16,6 +16,15 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (confidentialité)
+- Fait : à la demande de YannFR81 (ne pas diffuser les coordonnées du Département), le nom de la collectivité est retiré
+  de `ANTIGRAVITY_BRIEFING.md` sur cette branche.
+- Vérifié : aucun PDF, aucun texte de la norme, aucun nom réel ni adresse dans les fichiers suivis de la branche.
+- En suspens : la même ligne subsiste sur `main`, `gemini/lot-trafic` et `binome-lot-trafic`, et dans l’historique (commit dfd8583).
+- Règle pour tous les agents : ne jamais écrire le nom de la collectivité, ni déposer la norme NF P98-086 ou ses extraits
+  (PDF, OCR, captures) dans le dépôt ; le PDF porte le code client du titulaire de la licence.
+- Question pour YannFR81 : faut-il aussi purger l’historique (réécriture de `main`, donc force-push) ?
+
 ## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (décision de YannFR81 sur le point 3, signature)
 - Fait :
   - Point 3 tranché par YannFR81 (« fais ce que tu recommandes ») : pour une GNT sous une couche traitée aux liants
