@@ -148,7 +148,12 @@
       if (M.fam === "non_lie") {
         let k = M.kGNT, Emax = M.EmaxGNT, base = false;
         if (estNF()) {
-          if (!souple) { k = 3; Emax = 360; }                  // tableau D.1 : fondation de chaussée bitumineuse
+          if (!souple) {
+            // tableau D.1 : fondation de chaussée bitumineuse. Sous une couche traitée aux liants hydrauliques ou en béton
+            // (cas non prévu par D.1), on retient le plus faible des deux jeux de valeurs D.1 et D.2 (décision YannFR81).
+            const sousTraite = actives.slice(0, a).some(x => MATERIAUX[x.c.mat].fam === "hydraulique");
+            k = sousTraite ? Math.min(3, M.kGNT) : 3; Emax = sousTraite ? Math.min(360, M.EmaxGNT) : 360;
+          }
           else {                                               // couche de base de chaussée souple : E = Emax
             const dessus = actives.slice(0, a).some(x => MATERIAUX[x.c.mat].fam === "non_lie");
             const dessous = actives.slice(a + 1).some(x => MATERIAUX[x.c.mat].fam === "non_lie");

@@ -1,4 +1,4 @@
-/* Dimensionnement de chaussées — Burmister + Struct-Urb. Développé par YannFR81, agent territorial, et Claude, IA d’Anthropic, 2026.
+/* Dimensionnement de chaussées — Burmister + Struct-Urb. Développé par YannFR81, agent territorial, et Claude, IA d’Anthropic, relu par Gemini Antigravity Hydrogen, IA de Google, 2026.
    Licence GNU GPL v3 (œuvre dérivée de Struct-Urb, CERTU/Cerema). Sans garantie. */
 (function () {
   "use strict";
@@ -228,7 +228,7 @@
       if (Mx.cale) notes.push(`${x.mat} : ${Mx.cale}.`);
       if (Mx.saisie) notes.push(`${x.mat} : E = ${fmt(Mx.E)} MPa et σ6 = ${fmt(Mx.sig6, 2)} MPa saisis (pas de valeur de référence dans la norme).`);
     });
-    if (nf() && iGnt >= 0 && fams.slice(0, iGnt).some(m => m.fam === "hydraulique")) notes.push("GNT sous une couche traitée aux liants hydrauliques ou en béton : cas non prévu par le tableau D.1 ; module pris par prudence à min(3 × E dessous ; 360 MPa).");
+    if (nf() && iGnt >= 0 && fams.slice(0, iGnt).some(m => m.fam === "hydraulique")) notes.push("GNT sous une couche traitée aux liants hydrauliques ou en béton : cas non prévu par le tableau D.1 ; module pris au plus faible des tableaux D.1 et D.2, soit k = min(3 ; k de la catégorie) et Emax = min(360 MPa ; Emax de la catégorie).");
     if (nf() && fams.some(m => m.beton && m.beton !== "fond")) notes.push("Béton en couche de base-roulement : Sh = 0,03 m retenu ; le tableau D.13 admet 0,02 ou 0,01 m selon le matériel de mise en œuvre.");
     if (nf() && couches.some((x, i) => x.h_cm > 0 && x.interface === "collee" && M.MATERIAUX[x.mat].fam === "hydraulique" && !M.MATERIAUX[x.mat].beton && couches[i + 1] && M.MATERIAUX[couches[i + 1].mat].fam === "hydraulique" && !M.MATERIAUX[couches[i + 1].mat].beton)) notes.push("Couches traitées collées entre elles : critère vérifié à la base de l’assise seulement (8.5.2).");
     const kdB = o.res.crit.find(k => k.kd !== undefined && Math.abs(k.kd - 1) > 1e-9);

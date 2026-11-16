@@ -8,7 +8,7 @@ Version 1.0 — 16 novembre 2026.
 
 **Pour une fonction publique augmentée, pas remplacée.**
 
-Développé par YannFR81, agent territorial au sein d'un conseil départemental, et Claude, IA d'Anthropic, du 12 au 16 novembre 2026. L'agent a posé le besoin, piloté et vérifié. L'IA a codé, calculé et testé.
+Développé par YannFR81, agent territorial au sein d'un conseil départemental, et Claude, IA d'Anthropic, avec la relecture croisée de Gemini Antigravity Hydrogen, IA de Google, du 12 au 16 novembre 2026. L'agent a posé le besoin, piloté et tranché. Claude a codé, calculé et testé. Gemini a relu chaque valeur face à la norme.
 
 Données et méthode d'origine : logiciel Struct-Urb du CERTU, publié par le Cerema sous licence GPL v3 (https://github.com/CEREMA/territoires-ville.StructUrb).
 
@@ -39,7 +39,7 @@ GNU GPL v3 (fichier `LICENSE` à la racine du dépôt), comme Struct-Urb dont ce
 - **Annexe I de la NF P98-086 : 2019** : les 8 cas tests (souple, bitumineux, semi-rigide, rigide ; interfaces collées, semi-collées et glissantes) sont reproduits, 20 valeurs sur 20 dans les tolérances de la norme, par le solveur Python et par le moteur JavaScript.
   - `python3 valid_annexe_I.py`
   - `cd web && node test_annexe_I.js`
-- **Méthode** : 29 tests sur les règles de la norme relevées en relecture croisée (ks, couches collées, classes de trafic, catalogue) : `cd web && node test_methode.js`.
+- **Méthode** : 40 tests sur les règles de la norme relevées en relecture croisée (ks, couches collées, GNT sous couche traitée, classes de trafic, catalogue) : `cd web && node test_methode.js`.
 - **Solution exacte de Boussinesq** : écart relatif de l’ordre de 10⁻¹² (2,3·10⁻¹² au plus) (`valid_boussinesq.py`).
 - **Catalogue Struct-Urb** : en référentiel « CERTU / 1994 », les épaisseurs du catalogue sont retrouvées à 1 cm près pour les structures bitumineuses, semi-rigides et béton.
 
@@ -51,6 +51,7 @@ GNU GPL v3 (fichier `LICENSE` à la racine du dépôt), comme Struct-Urb dont ce
 ## Limites
 
 - Outil de prédimensionnement, non certifié : il ne remplace ni Alizé-LCPC ni une étude de dimensionnement.
+- GNT sous une couche traitée aux liants hydrauliques ou en béton : cas non prévu par le tableau D.1. Choix du fork : le plus faible des tableaux D.1 et D.2, soit k = min(3 ; k de la catégorie) et Emax = min(360 MPa ; Emax de la catégorie).
 - Structures mixtes : seule la première phase du calcul en deux phases (8.6) est faite. Structures inverses : la majoration de la valeur admissible sur la GNT (8.7) n'est pas appliquée.
 - Gel : méthode simplifiée de l'annexe H.3, plus sévère que le modèle thermique normalisé (6.2.2), qui n'est pas programmé.
 - Risque de calcul des fondations en béton : la ligne spécifique du tableau B.7 n'est pas appliquée.
