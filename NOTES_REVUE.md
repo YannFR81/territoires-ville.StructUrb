@@ -16,6 +16,37 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — lot 4 Recherche d’épaisseur (branche claude/lot-epaisseur)
+Rôles inversés à la demande de YannFR81 : Claude écrit, Gemini relit.
+- Fait :
+  - `structurb/epaisseur.py` (export dans `__init__.py`) :
+    `ne_theorique_et_indice` (`TrouverNEthEtInd`), `epaisseur_possible` (`TrouverEpaisseurPossible`),
+    `rechercher_epaisseur` (`RechercherEpaisseur`), résultats `ResultatEpaisseur` / `ResultatQualite`.
+  - Tests écrits **avant** le code (`tests/test_epaisseur.py`, 24 tests) : valeurs de référence relevées dans l’extraction
+    indépendante `dimensionnement-burmister/catalogue_structures.csv` (colonne NE), pas dans le code testé.
+- Vérifié :
+  - `python -m pytest -q` : **118 / 118** (94 + 24).
+  - Balayage complet contre le CSV : chaque ligne (7 544) retrouvée par son NE exact et par le NE juste au-dessus du palier précédent.
+  - Paliers de NE : `CLng(Exp(m × Log(10)))` donne bien 10^m pour m = 0 à 9 ; comparaison avec un calcul entier
+    sur les 9 plages (min, max) du catalogue : **0 écart sur 342 497 valeurs de NE**.
+  - Catalogue : pour les 69 structures, le nombre de paliers entre NE min et NE max est égal au nombre de lignes des 8 grilles
+    (la recherche ne peut pas sortir d’une grille).
+- Points de fidélité à relire :
+  1. `monTabEp` : (surface, 0, base 1, base 2, fondation 1, fondation 2). Surface « sans épaisseur » → **3 cm** ;
+     sinon pavés ou dalles → **lit de pose 4 cm** en 2e case (comparaison exacte sur `"Dalles"` et `"Pavés"`).
+     L’épaisseur préconisée garde la valeur du catalogue, lue avant ces corrections.
+  2. Épaisseur « non trouvée » si `UCase(maximum pratique) = "OUI"`.
+  3. NE hors de [min, max] → `None` (le VB6 met les deux `monEpQ*Trouv` à faux).
+  4. Écart assumé : une plate-forme inconnue lève `ValueError` (le VB6 prend PF3 par défaut, mais `TrouverEpaisseurPossible`
+     l’exclut avant).
+- À signaler (VB6, non modifié) :
+  - Le tableau `monTabEp`, avec les 3 cm « pour la visu » et le lit de pose, sert ensuite à `CalculerIndiceGelAdm` :
+    ces épaisseurs entrent donc dans l’indice de gel admissible. À garder tel quel pour la fidélité ; à noter pour YannFR81.
+  - ` Enrobés /GB3/GB3` a des grilles Q2 entièrement à 0 avec maximum pratique « Non » : le VB6 les considère comme trouvées.
+- À relire par Gemini : `structurb/epaisseur.py`, `tests/test_epaisseur.py`, `structurb/__init__.py`.
+- Question pour YannFR81 : faut-il garder l’effet des 3 cm d’affichage et du lit de pose sur l’indice de gel admissible
+  (fidélité VB6) ou l’isoler plus tard dans une option ?
+
 ## 2026-11-17 — Claude — relecture des correctifs du lot Catalogue (99c3d12, branche gemini/lot-catalogue)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **94 / 94**.
