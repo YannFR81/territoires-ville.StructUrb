@@ -33,8 +33,8 @@ Modèle d'entrée :
   Sh sur l’épaisseur totale d’assise bitumineuse), `modeleMeca` (modules des GNT, tableaux D.1 et D.2),
   `quantiteGelMecanique` (6.2.1.5), `verifierGelNorme` (équations 13 à 17, H.9), `camNorme` et `risqueNorme`
   (tableaux B.2 à B.4, B.7, B.8) : comparer chaque valeur au texte de la norme.
-- Question pour YannFR81 : la signature utilise le pseudo « YannPRO81 » demandé en session, alors que la règle
-  du fork dit « uniquement YannFR81 » : lequel garder ? Faut-il citer ce dossier dans le `README.md` de la racine
+- Question pour YannFR81 : pseudo de la signature tranché par YannFR81 sur la PR n° 2 : « YannFR81 » (corrigé partout).
+  Faut-il citer ce dossier dans le `README.md` de la racine
   et dans `AGENTS.md` ? Les données chiffrées des cas tests de l’annexe I (`web/annexe_I.json`, `valid_annexe_I.py`)
   viennent d’une norme AFNOR : confirmer qu’elles peuvent rester dans un dépôt public.
 
