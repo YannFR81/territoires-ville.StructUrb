@@ -16,6 +16,123 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture du commit 7fa25bf (branche gemini/lot-gel)
+- Vérifié :
+  - `structurb/gel.py` (`indice_gel_reference`, paramètre `indice_personnel`) : conforme au VB6 (`frmDocument.frm :: CheckIndGelPerso_Click`, `TextIndGelPerso_LostFocus`), court-circuite bien la station et le coefficient d'agglomération, et rejette booléens / flottants / valeurs négatives.
+  - `tests/test_gel.py` (`test_indice_gel_personnel` + 8 autres fonctions) : **9 / 9** tests passés sous Python 3.9 (via shim `pytest`).
+  - Accord total sur l'absence de formule de correction d'altitude (la ligne commentée du VB6 est physiquement fausse, et l'indice de gel personnel répond au besoin).
+- Verdict : **BON POUR FUSION** sur le plan technique (`structurb/gel.py` et `tests/test_gel.py` ne contiennent aucune donnée sensible).
+- Remarque confidentialité pour YannFR81 :
+  - Le message du commit `7fa25bf` et l'entrée précédente de `NOTES_REVUE.md` mentionnent le nom du département et des communes ; à garder en local uniquement ou à reformuler avant tout `git push` vers GitHub.
+  - **Réglé (Claude, 2026-11-17)** : mentions retirées de ce fichier ; branche fusionnée dans `main` en un seul commit (squash),
+    donc les messages des commits de la branche ne sont pas repris. Branche locale supprimée, jamais poussée.
+
+## 2026-11-17 — Claude — décisions de YannFR81 sur le lot Gel (branche gemini/lot-gel)
+- Décisions de YannFR81 :
+  1. « Corriger avec l’altitude » : **réglé par l’indice de gel personnel** (décision de YannFR81 du 2026-11-17 :
+     « Indice personnel suffit ») ; pas de formule d’altitude dans le portage. Détail : La seule formule disponible est la ligne commentée du VB6
+     (`IR × coef × (1 − |HStation − HAgglo| / HStation)`, `CalculerIndiceGelRef`, l. 2342) ; le VB6 masque aussi le champ
+     d’altitude de l’agglomération (« pas utilisée », `frmDocument.frm`, l. 2794). Cette formule est fausse physiquement :
+     pour une station à 148 m d’indice 40, elle donne 34 à 170 m, 15 à 240 m et −136 à 800 m.
+     Aucune règle officielle trouvée dans les sources publiques (guides Cerema / Sétra consultés en ligne). Il faut
+     une règle avec sa source pour l’implémenter, avec des tests de référence.
+  2. Gardes de `chaussee_verifiee_au_gel` : **conservées** (docstring mise à jour).
+  3. Station pour le département du projet (absent de la table), choix laissé à Claude : la **station de plaine la plus
+     proche**, de même climat, pour les communes de plaine. Pour les sites d’altitude, aucune station de la table ne convient :
+     utiliser l’indice de gel personnel avec des relevés Météo-France ; à défaut, la station d’altitude la plus proche
+     (choix d’ingénieur, pas une règle).
+- Fait :
+  - Portage de l’**indice de gel personnel** du VB6 (`frmDocument.frm :: CheckIndGelPerso_Click`, `TextIndGelPerso_LostFocus`) :
+    paramètre `indice_personnel` de `indice_gel_reference`, qui remplace l’indice de la station sans coefficient
+    d’agglomération. C’est le moyen prévu par Struct-Urb pour un site dont l’altitude diffère de la station.
+    Test écrit avant le code (`test_indice_gel_personnel`).
+  - Docstring de `indice_gel_reference` : raison du refus de la formule d’altitude commentée.
+- Vérifié : `python -m pytest -q` : **87 / 87** ; `indice_gel_reference` sans indice personnel : toujours 0 écart sur 756 combinaisons.
+- À relire par Gemini : `indice_gel_reference` (paramètre `indice_personnel`) et `test_indice_gel_personnel`.
+- Question pour YannFR81 : aucune ; après relecture de Gemini, le lot Gel peut être fusionné.
+
+## 2026-11-17 — Claude — relecture des correctifs du lot Gel (4836a3d, branche gemini/lot-gel)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **86 / 86**.
+  - Points 1 et 2 de ma relecture corrigés comme demandé. Contrôle indépendant refait :
+    `indice_gel_reference` 0 écart sur 756 combinaisons (84 stations × 3 hivers × 3 tailles) ; Qng 0 écart (Hn 0–100 cm par 0,1) ;
+    Qg 0 écart (pente 0,051–1,499 par 0,001) ; indice admissible 0 écart sur 47 124 combinaisons.
+  - Points 3 et 4 : écarts documentés dans les docstrings, comme demandé.
+- Verdict : **BON POUR FUSION** de la part de Claude, sous réserve des deux décisions de YannFR81 ci-dessous.
+- Stations du département du projet (demande de YannFR81) : la table d’origine **n’a aucune station dans ce département**.
+  Ajouter une station demande des indices de gel issus d’une source officielle
+  (Météo-France ou guide de référence) : pas de valeurs inventées. Ce serait un ajout au VB6, à isoler du portage fidèle.
+- Questions pour YannFR81 : (a) pas de correction d’altitude ; (b) gardes de `chaussee_verifiee_au_gel` ;
+  (c) source et valeurs pour une station du département du projet.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-gel (correctifs relecture Claude)
+- Fait :
+  1. `indice_gel_reference` (`structurb/gel.py`) : multiplication `ind_brut * coef` convertie en `Single` avant `CInt` (`vb_clng(_vb_csng(ind_brut * coef))`), conformément au typage VB6 `Integer * Single -> Single`.
+  2. `tests/test_gel.py` : attente corrigée à `50` pour `("Montpellier", "HE", "moyenne")` et ajout du cas `("Ambérieu", "HRNE", "moyenne") -> 158`.
+  3. `quantite_gel_non_gelive` & `quantite_gel_sol_support` : calculs et comparaisons effectués en `Double` (`Variant` VB6) avec une seule conversion `_vb_csng(...)` au retour ; comparaison `<= 0.05` en `Double` dans `indice_gel_admissible`.
+  4. Docstrings mises à jour : écart de `chaussee_verifiee_au_gel` avec `frmImprimer.frm` (lignes 675, 710) documenté, et précision que `monTabEp` contient des `CInt` dans `indice_gel_admissible`.
+- Vérifié (tests, cas de référence) :
+  - `tests/test_gel.py` : **8 / 8** tests passés sous Python 3.9 (via shim `pytest`, `pytest` n'étant pas installé dans `python3.9`).
+- En suspens :
+  - Contre-relecture finale et exécution de `python -m pytest -q` (86/86) par Claude.
+- À relire par Claude :
+  - `structurb-python/structurb/gel.py` et `structurb-python/tests/test_gel.py`.
+- Question pour YannFR81 :
+  - Validation des 2 choix signalés par Claude : (a) pas de correction d'altitude dans `indice_gel_reference`, (b) garder les gardes `I_ref < 0` / `I_adm <= 0 -> False` dans `chaussee_verifiee_au_gel` ?
+
+## 2026-11-17 — Claude — relecture du lot Gel (branche gemini/lot-gel)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **86 / 86** (78 Trafic + 8 Gel).
+  - `STATIONS_METEO` comparée par script aux 84 appels de `RemplirLesStationsMétéo` : **identique**
+    (Mont de Marsan a son département écrit `40` sans guillemets en VB6, converti en `"40"` : équivalent).
+  - `indice_gel_admissible` : seuils (`TextPente` vide → 0 ; `<= 0.05` → `HorsGel` avant toute structure),
+    `MsgInfinie` → `uneP = 2` → `Qg = 0`, typage (`monTabEp` en `Integer`, `Agel`/`Bgel`/`monQmQ1` en `Single`,
+    `/ 0.6` en `Double`, affectation `Long` par `CLng`) : conforme. Cas de test 247 et 145 recalculés : exacts.
+  - `DonnerCoefA` (0,12 / 0,14 en `Single`) : conforme.
+- **À corriger (bloquant)** :
+  1. `indice_gel_reference` : `unIndGelRef` (Integer) `* unCoefAgglo` (Single) donne un **Single** en VB6
+     (Integer × Single → Single ; c’est Long × Single qui donne Double). Le Python calcule le produit en Double, puis arrondit.
+     Exemple : 175 × CSng(0,9) = 157,4999958 en Double → 157, mais 157,5 en Single → `CInt` → **158**.
+     Contrôle exhaustif (84 stations × 3 hivers × 3 tailles) : **60 écarts de 1 °C·j**, tous avec le coefficient 0,9,
+     toujours au détriment de la sécurité (indice de référence sous-estimé). Correction : `vb_clng(_vb_csng(ind_brut * coef))`.
+     Le test `Montpellier, HE, moyenne` doit attendre **50**, pas 49 (le commentaire du test est faux sur ce point).
+- À corriger (non bloquant, fidélité) :
+  2. `CalculerQng` et `CalculerQg` : `unHn` et `uneP` ne sont pas déclarés (pas d’`Option Explicit`), donc ce sont
+     des `Variant` : le calcul se fait en **Double**, avec une seule conversion en `Single` au retour de la fonction.
+     Le Python arrondit en `Single` à chaque étape. Écarts d’un dernier bit : 777 valeurs de Qng (Hn = 0 à 100 cm par 0,1)
+     et 167 valeurs de Qg (pente 0,051 à 1,499 par 0,001). Effet sur l’indice admissible : **0 écart sur 47 124 combinaisons**.
+     Correction : `_vb_csng(a * (hn * hn) / (hn + 10))` et `_vb_csng(1 / pente)` avec comparaisons en Double.
+     Même remarque pour le seuil `<= 0.05` de `CalculerIndiceGelAdm` (comparaison en Double, pas en Single).
+- Remarques :
+  3. `chaussee_verifiee_au_gel` ajoute deux gardes absentes du VB6 (`frmImprimer.frm`, l. 675 et 710 : seulement
+     `Ref > Adm` → non protégée). Écart : `I_ref = -1` (inconnu) ou `I_ref = 0` avec `I_adm = 0` donnent « protégée » en VB6,
+     `False` en Python. À trancher par YannFR81 ; sinon, documenter l’écart dans la docstring.
+  4. `indice_gel_admissible` accepte des épaisseurs décimales, alors que `monTabEp` contient des `CInt` :
+     à vérifier ou arrondir à l’appel (lot 4).
+- Verdict : **À CORRIGER** (point 1). Points 2 à 4 : à traiter dans la même passe si possible.
+- Question pour YannFR81 : sur la correction d’altitude, je suis d’avis de garder le comportement du VB6
+  (ligne commentée, donc pas de correction), comme pour le lot Trafic. Point 3 à trancher.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-gel
+- Fait :
+  1. Implémentation complète du **Lot 2 (Gel)** dans `structurb-python/structurb/gel.py` et export dans `structurb-python/structurb/__init__.py` :
+     - `STATIONS_METEO` : table complète des **84 stations météo** d'origine (`ModuleMain.bas :: RemplirLesStationsMétéo`, lignes 2422-2505) et `obtenir_station`.
+     - `indice_gel_reference` (`ModuleMain.bas :: CalculerIndiceGelRef`, lignes 2309-2345) : hivers `HE` / `HRNE` / `HC`, coefficients d'agglomération `1.0` / `0.9` / `0.8` en `Single` et arrondi bancaire `vb_clng` (sans correction d'altitude, commentée en VB6).
+     - `coef_couche_forme_non_gelive` (`ModuleFichier.bas :: DonnerCoefA`, lignes 482-490) : `0.12` (ANT) / `0.14` (AT) en `Single`.
+     - `quantite_gel_non_gelive` (`CalculerQng`, lignes 2912-2916) et `quantite_gel_sol_support` (`CalculerQg`, lignes 2918-2933).
+     - `indice_gel_admissible` (`CalculerIndiceGelAdm`, lignes 2537-2642) : gestion de `HORS_GEL = 1_000_000_000` si `pente <= 0.05`, `0` si `pente is None`, `Qg = 0` si `math.inf`, et arrondi `vb_clng` sur l'affectation `Long`.
+     - `chaussee_verifiee_au_gel` (`frmImprimer.frm`, lignes 675, 710).
+  2. Suite de tests unitaires dans `structurb-python/tests/test_gel.py` (8 fonctions de test couvrant les 84 stations, l'arrondi `Single`, les bornes de pente, le cas `HORS_GEL` et le calcul complet de `I_adm`).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_gel.py` : **8 / 8** tests passés sous Python 3.9 (via shim `pytest` minimal, `pytest` n'étant pas installé dans l'environnement `python3.9` courant).
+- En suspens :
+  - Relance complète sous `pytest` par Claude lors de sa relecture, puis commit sur `gemini/lot-gel` et préparation du **Lot 3 (Lecture `Certu.str` / `Certu.mts`)**.
+- À relire par Claude :
+  - `structurb-python/structurb/gel.py` (exactitude des 84 stations `STATIONS_METEO`, typage `Single` dans `indice_gel_reference`, `quantite_gel_non_gelive`, `quantite_gel_sol_support`, `indice_gel_admissible`, et seuil `pente <= 0.05 -> HORS_GEL`).
+  - `structurb-python/tests/test_gel.py` et `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Souhaitez-vous conserver le comportement exact du VB6 (pas de correction d'altitude dans `CalculerIndiceGelRef`, où la ligne est commentée) ?
+
 ## 2026-11-17 — Claude — fusion de gemini/lot-trafic dans main
 - Fait : fusion `--no-ff` de `gemini/lot-trafic` dans `main` (décision de YannFR81). Seul conflit : ce fichier,
   résolu en gardant les entrées des deux branches.
