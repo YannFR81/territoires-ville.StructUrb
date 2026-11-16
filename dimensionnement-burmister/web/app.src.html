@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="YannPRO81, agent territorial ; Claude, IA d’Anthropic">
+<meta name="generator" content="Claude (Anthropic)">
+<title>Dimensionnement de chaussées urbaines — Burmister + Struct-Urb</title>
+<style>
+:root{--or:#DD590A;--bl:#5E99C5;--vt:#179D87;--lv:#7F0541;--g1:#f5f6f7;--g2:#e3e6e9;--g3:#8a929a;--tx:#1f2328;--ok:#179D87;--ko:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--tx);background:#fff;font-size:14px;line-height:1.4}
+header{background:var(--or);color:#fff;padding:14px 22px}
+header h1{margin:0;font-size:20px}
+header p{margin:3px 0 0;font-size:12.5px;opacity:.92}
+.avert{background:#fff4ec;border-left:4px solid var(--or);padding:8px 14px;margin:12px 22px;font-size:12.5px}
+main{display:grid;grid-template-columns:minmax(380px,520px) 1fr;gap:18px;padding:0 22px 30px}
+@media (max-width:980px){main{grid-template-columns:1fr}}
+section{border:1px solid var(--g2);border-radius:8px;margin-bottom:14px;overflow:hidden}
+section h2{margin:0;font-size:15px;background:var(--g1);padding:8px 12px;border-bottom:1px solid var(--g2);display:flex;align-items:center;gap:8px}
+section h2 .n{background:var(--bl);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.body{padding:10px 12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+label{display:block;font-size:12px;color:#444;margin-bottom:2px}
+input,select{width:100%;padding:5px 6px;border:1px solid #c5cbd1;border-radius:4px;font:inherit;font-size:13px;background:#fff}
+input[type=checkbox],input[type=radio]{width:auto}
+.out{background:var(--g1);border-radius:4px;padding:5px 8px;font-weight:bold}
+.hint{font-size:11.5px;color:var(--g3);margin-top:2px}
+.msg{font-size:12.5px;margin-top:6px;padding:6px 8px;border-radius:4px}
+.msg.warn{background:#fff4ec;color:#8a3a06}.msg.err{background:#fdecea;color:var(--ko)}.msg.info{background:#eef5fb;color:#24557a}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border-bottom:1px solid var(--g2);padding:4px 5px;text-align:left}
+th{background:var(--g1);font-weight:bold;font-size:12px}
+td.num,th.num{text-align:right}
+#couches td input,#couches td select{padding:3px 4px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{font:inherit;font-size:13px;padding:7px 12px;border-radius:5px;border:1px solid var(--bl);background:#fff;color:#24557a;cursor:pointer}
+button.prim{background:var(--or);border-color:var(--or);color:#fff;font-weight:bold}
+button:disabled{opacity:.5;cursor:wait}
+.small{padding:2px 7px;font-size:12px}
+.verdict{font-size:16px;font-weight:bold;padding:10px 12px;border-radius:6px;margin-bottom:10px}
+.verdict.ok{background:#e6f5f2;color:#0e6b5b}.verdict.ko{background:#fdecea;color:var(--ko)}
+.ok{color:var(--ok);font-weight:bold}.ko{color:var(--ko);font-weight:bold}
+.bar{height:8px;background:var(--g2);border-radius:4px;position:relative;min-width:80px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.flex{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:10px;background:var(--g2);color:#444;margin-left:4px}
+footer{font-size:11.5px;color:var(--g3);padding:0 22px 20px}
+footer a{color:#24557a}
+body[data-ref=nf2019] .ce{display:none}body[data-ref=certu] .nf{display:none}
+.quad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.duo{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+</style>
+</head>
+<body data-ref="nf2019">
+<header>
+  <h1>Dimensionnement de chaussées urbaines</h1>
+  <p>Trafic → NE → structure → vérification mécanique (modèle de Burmister, méthode rationnelle française) → vérification au gel — d’après le catalogue Struct-Urb (CERTU, GPL v3)</p>
+</header>
+<div class="avert"><b>Outil de prédimensionnement.</b> Le solveur passe les 8 cas tests de l’annexe I de la NF P98-086 : 2019 (20 valeurs sur 20 dans les tolérances). En référentiel « NF P98-086 : 2019 », les paramètres viennent des annexes B, C, D et H de la norme. Ce n’est pas un logiciel certifié : les structures mixtes et inverses ne sont pas traitées selon la norme, et le gel suit la méthode simplifiée de l’annexe H.3. À ne pas utiliser seul comme justificatif.</div>
+<main>
+<div>
+  <section>
+    <h2><span class="n">1</span>Trafic</h2>
+    <div class="body">
+      <div class="row">
+        <div style="grid-column:1/3"><label>Type de voie</label><select id="voie"></select></div>
+        <div><label>Trafic initial (PL/j/sens/voie)</label><input id="T" type="number" min="0" value="200"><div class="hint" id="classe"></div></div>
+        <div><label>Durée de service (ans)</label><input id="n" type="number" min="1" max="50" value="20"></div>
+        <div><label>Croissance annuelle</label><select id="tau"><option value="0">0 %</option><option value="1" selected>1 %</option><option value="2">2 %</option><option value="3">3 %</option><option value="4">4 %</option><option value="5">5 %</option></select></div>
+        <div><label>Loi de croissance</label><select id="loi"><option value="arith">Arithmétique (Struct-Urb)</option><option value="geom">Géométrique</option></select></div>
+        <div><label>Trafic cumulé (PL)</label><div class="out" id="TC">—</div></div>
+      </div>
+      <div id="msgT"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>Structure et NE</h2>
+    <div class="body">
+      <div class="row">
+        <div style="grid-column:1/3"><label>Référentiel des paramètres</label><select id="ref"><option value="nf2019">NF P98-086 : 2019 — paramètres des annexes de la norme</option><option value="certu">CERTU / méthode 1994 — recalé sur le catalogue Struct-Urb</option></select><div class="hint" id="refHint"></div></div>
+        <div style="grid-column:1/3"><label>Structure type du catalogue Struct-Urb (point de départ, filtrée selon la voie)</label><select id="struct"></select></div>
+        <div><label>Classe de plate-forme</label><select id="pf"><option>PF1</option><option selected>PF2</option><option value="PF2+">PF2qs (80 MPa)</option><option>PF3</option><option>PF4</option></select></div>
+        <div class="ce"><label>CAM</label><input id="cam" type="number" step="0.05" min="0"><div class="hint" id="camHint"></div></div>
+        <div class="nf"><label>Risque de calcul (%) : bitumineux / MTLH et béton</label><div class="duo"><input id="rB" type="number" min="1" max="50" step="0.5"><input id="rH" type="number" min="1" max="50" step="0.5"></div><div class="hint" id="rHint"></div></div>
+        <div class="nf" style="grid-column:1/3"><label>CAM : bitumineux / MTLH et béton / sols traités / plate-forme et GNT</label><div class="quad"><input id="camB" type="number" step="0.05" min="0"><input id="camH" type="number" step="0.05" min="0"><input id="camS" type="number" step="0.05" min="0"><input id="camP" type="number" step="0.05" min="0"></div><div class="hint" id="camNFHint"></div></div>
+        <div style="grid-column:1/3"><label>NE (essieux équivalents de 130 kN)</label><div class="out" id="NE">—</div><label class="ce" style="margin-top:3px"><input type="checkbox" id="arrondi"> arrondir NE aux classes du catalogue</label></div>
+        <div class="ce"><label>Risque de calcul (%)</label><input id="risque" type="number" min="1" max="50" step="1"></div>
+        <div class="ce"><label>Loi εz du sol : A</label><select id="A"><option value="0.012">0,012 (trafic moyen à fort)</option><option value="0.016">0,016 (trafic faible)</option></select></div>
+        <div class="ce"><label>Chantier</label><select id="Q"><option value="Q1">Q1 — conditions standard</option><option value="Q2">Q2 — chantier difficile</option></select></div>
+        <div class="nf" id="solBox" style="grid-column:1/3;display:none"><label>Sol traité — valeurs de dimensionnement issues de l’étude de laboratoire : E (MPa) / σ6 (MPa)</label><div class="duo"><input id="solE" type="number" min="500" step="500" value="12000"><input id="solS6" type="number" min="0.05" step="0.05" value="0.5"></div><div class="hint">La norme ne donne pas de valeur de référence pour les sols traités (D.2.3) : saisir E et σ6 après pondération (annexe E.2.4). Sh = 0,04 m (sol fin ou sableux traité en place) ou 0,05 m (graveleux).</div></div>
+      </div>
+      <div id="msgS"></div>
+      <h3 style="font-size:13px;margin:12px 0 4px">Couches (de haut en bas)</h3>
+      <table id="couches">
+        <thead><tr><th>Matériau</th><th class="num">h (cm)</th><th>Interface dessous</th><th title="Critère de fatigue vérifié">Vérif.</th><th title="Couche dont l’épaisseur est recherchée">Var.</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="btns"><button class="small" id="add">+ couche</button><button class="small" id="reload">Recharger depuis le catalogue</button></div>
+      <div class="hint" id="gntHint"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>Vérification au gel</h2>
+    <div class="body">
+      <div class="msg info" style="margin:0 0 8px" id="gelBanner"></div>
+      <div class="row">
+        <div style="grid-column:1/3"><label>Station de référence</label><select id="station"></select></div>
+        <div><label>Hiver de référence</label><select id="hiver"><option value="5">HC (courant)</option><option value="4" selected>HRNE (rigoureux non exceptionnel)</option><option value="3">HE (exceptionnel)</option></select></div>
+        <div><label>Taille de l’agglomération</label><select id="agglo"><option value="1">&lt; 100 000 hab. (×1)</option><option value="0.9">100 000 à 1 000 000 hab. (×0,9)</option><option value="0.8">&gt; 1 000 000 hab. (×0,8)</option></select></div>
+        <div><label><input type="checkbox" id="IRperso"> Indice de gel personnel (°C·j)</label><input id="IRval" type="number" min="0" disabled></div>
+        <div><label>IR corrigé (°C·j)</label><div class="out" id="IR">—</div></div>
+        <div><label>Couche de forme non gélive h<sub>n</sub> (cm)</label><input id="hn" type="number" min="0" value="0"></div>
+        <div class="ce"><label>Couche de forme</label><select id="Acf"><option value="0.12">Non traitée (A = 0,12)</option><option value="0.14">Traitée (A = 0,14)</option></select></div>
+        <div class="nf"><label>Matériau non gélif : A<sub>n</sub> (tableau C.9)</label><select id="An"><option value="12">12 — non traité : C2A, B, D</option><option value="14">14 — non traité : (C1)A, R1</option><option value="13">13 — traité LH : (C1)B, D</option><option value="14">14 — traité LH : (C1)A, R1</option><option value="17">17 — cendres volantes</option></select></div>
+        <div class="nf"><label>Matériau peu gélif h<sub>p</sub> (cm)</label><input id="hp" type="number" min="0" value="0"></div>
+        <div class="nf"><label>Peu gélif : pente p<sub>p</sub> / A<sub>p</sub></label><div class="duo"><input id="pp" type="number" min="0.06" max="1" step="0.05" value="0.4"><select id="Ap"><option>12</option><option>13</option><option>14</option><option>17</option></select></div></div>
+        <div><label>Sol gélif sous-jacent</label><select id="sol"><option value="tg">Très gélif</option><option value="pg" selected>Peu gélif</option><option value="ng">Non gélif</option></select></div>
+        <div><label>Pente p de l’essai de gonflement</label><input id="pente" type="text" value="0.4"></div>
+        <div class="ce" style="grid-column:1/3"><label>Qm — protection mécanique de la chaussée (°C·j)<sup>½</sup></label><input id="Qm" type="number" step="0.1" min="0" value="0"><div class="hint" id="QmHint">Valeur tabulée par le CERTU pour la structure type ; à saisir pour une structure libre (0 = sécurité).</div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div>
+  <section>
+    <h2><span class="n">3</span>Vérification mécanique</h2>
+    <div class="body">
+      <div class="btns" style="margin-top:0">
+        <button class="prim" id="go">Rechercher l’épaisseur de la couche variable</button>
+        <button id="check">Vérifier les épaisseurs saisies</button>
+        <button id="copy">Copier la note de calcul</button>
+      </div>
+      <div id="res" style="margin-top:12px"><div class="msg info">Renseigne le trafic et la structure, puis lance le calcul.</div></div>
+    </div>
+  </section>
+  <section>
+    <h2><span class="n">5</span>Résultat gel</h2>
+    <div class="body" id="gel"><div class="msg info">Le gel est vérifié après le calcul mécanique, avec les épaisseurs retenues.</div></div>
+  </section>
+</div>
+</main>
+<footer>
+  Solveur : massif élastique multicouche de Burmister, jumelage standard de 65 kN (2 disques de 0,125 m à 0,662 MPa, entraxe 0,375 m). Référentiel NF P98-086 : 2019 : points de calcul à l’axe de roue et au centre du jumelage (5.3), valeurs admissibles selon les équations 7, 9, 28 et 29, kr selon l’équation 11, ks selon le tableau C.2, matériaux selon l’annexe D, CAM et risques selon l’annexe B, gel selon les équations 13 à 17, 21 à 23 et H.9. Catalogue de structures et stations météo : <a href="https://github.com/CEREMA/territoires-ville.StructUrb">CEREMA/territoires-ville.StructUrb</a> (GPL v3).
+  <p style="margin:10px 0 0;padding-top:8px;border-top:1px solid var(--g2)"><b style="color:var(--or)">Pour une fonction publique augmentée, pas remplacée.</b> Développé par YannPRO81, agent territorial au sein d’un conseil départemental, et Claude, IA d’Anthropic : l’agent a posé le besoin, piloté et vérifié ; l’IA a codé, calculé et testé. Bâti sur Struct-Urb (CERTU / Cerema). Publié sur GitHub, dans un fork du dépôt Struct-Urb du Cerema : <a href="https://github.com/YannFR81/territoires-ville.StructUrb">YannFR81/territoires-ville.StructUrb</a>. Licence GNU GPL v3, fourni sans garantie. Version 1.0, novembre 2026.</p>
+</footer>
+
+<script>/*ENGINE*/</script>
+<script>/*METHODE*/</script>
+<script>/*CATALOGUE*/</script>
+<script>/*APP*/</script>
+</body>
+</html>
