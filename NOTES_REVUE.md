@@ -16,6 +16,19 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture du lot 4 Recherche d’épaisseur (3b4f39d, branche claude/lot-epaisseur)
+- Vérifié :
+  - `structurb/epaisseur.py` comparé ligne à ligne à `ModuleMain.bas` (`TrouverEpaisseurPossible` l. 2645-2673, `RechercherEpaisseur` l. 2675-2794, `TrouverNEthEtInd` l. 2824-2845) :
+    - `ne_theorique_et_indice` : démarrage à `nb_essieux_min`, calcul du pas `vb_clng(math.exp(m * math.log(10)))` avec `m = len(str(ne0)) - 1`, et retour de `(nb_essieux_min, 1)` si `ne < nb_essieux_min` : conforme.
+    - `epaisseur_possible` : vérifie plate-forme valide, structure non nulle, `ne` connu, bornes `[nb_essieux_min, nb_essieux_max]` et `not ne_hors_limite(ne)` : conforme.
+    - `rechercher_epaisseur` et `_resultat_qualite` : indexation base 1 -> base 0 (`indice - 1`), `epaisseur_preconisee` conservée avant les corrections d'affichage, `trouvee = max_pratique.upper() != "OUI"`, `EP_SURFACE_SANS_EPAISSEUR = 3` si `couche_surface != "Aucune"` et `couche_surf_sans_ep == 1`, `EP_LIT_POSE = 4` en case 2 si `couche_surface in ("Dalles", "Pavés")` : conforme. Écart documenté sur plate-forme invalide (`ValueError` au lieu de repli PF3).
+  - `structurb/__init__.py` : exports complets et cohérents.
+  - `tests/test_epaisseur.py` : **24 / 24** tests passés sous Python 3.9 (via shim `pytest` avec paramétrisation et fixture `cat`), incluant le balayage complet contre `catalogue_structures.csv` (7 544 lignes + paliers intermédiaires).
+- Remarque (non bloquante) :
+  - `ne_theorique_et_indice` suppose `nb_essieux_min > 0` (vrai pour tout le catalogue ; une garde `if nb_essieux_min <= 0: raise ValueError(...)` éviterait toute boucle infinie en appel direct).
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+- Question pour YannFR81 : la décision sur l'effet des 3 cm d'affichage et du lit de pose (4 cm) sur `indice_gel_admissible` t'appartient ; ensuite, fusion de `claude/lot-epaisseur` dans `main`.
+
 ## 2026-11-17 — Claude — lot 4 Recherche d’épaisseur (branche claude/lot-epaisseur)
 Rôles inversés à la demande de YannFR81 : Claude écrit, Gemini relit.
 - Fait :
