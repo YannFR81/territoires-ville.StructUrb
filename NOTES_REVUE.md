@@ -16,6 +16,118 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (confidentialité)
+- Fait : à la demande de YannFR81 (ne pas diffuser les coordonnées du Département), le nom de la collectivité est retiré
+  de `ANTIGRAVITY_BRIEFING.md` sur cette branche.
+- Vérifié : aucun PDF, aucun texte de la norme, aucun nom réel ni adresse dans les fichiers suivis de la branche.
+- En suspens : la même ligne subsiste sur `main`, `gemini/lot-trafic` et `binome-lot-trafic`, et dans l’historique (commit dfd8583).
+- Règle pour tous les agents : ne jamais écrire le nom de la collectivité, ni déposer la norme NF P98-086 ou ses extraits
+  (PDF, OCR, captures) dans le dépôt ; le PDF porte le code client du titulaire de la licence.
+- Question pour YannFR81 : faut-il aussi purger l’historique (réécriture de `main`, donc force-push) ?
+
+## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (décision de YannFR81 sur le point 3, signature)
+- Fait :
+  - Point 3 tranché par YannFR81 (« fais ce que tu recommandes ») : pour une GNT sous une couche traitée aux liants
+    hydrauliques ou en béton (cas non prévu par le tableau D.1), `modeleMeca` retient le plus faible des deux jeux de valeurs,
+    k = min(3 ; k de la catégorie) et Emax = min(360 MPa ; Emax de la catégorie). Raison : l’ancienne valeur (k = 3, 360 MPa)
+    n’était prudente que pour une CG1 ; pour une CG2 ou une CG3 elle donnait un module plus fort que le tableau D.2
+    (ex. CG3 sur PF2 : 150 MPa au lieu de 100). Sous une assise bitumineuse, rien ne change (tableau D.1).
+  - Tests écrits d’abord (commit 86f9ae5, 11 cas ajoutés dans `web/test_methode.js`, 6 en échec avant le code).
+  - Signature (`SIGNATURE.txt`, README, pied de page) : ajout de la relecture croisée de Gemini Antigravity Hydrogen, IA de Google,
+    à la demande de YannFR81.
+- Vérifié : `node test_methode.js` 40 sur 40 ; annexe I 20 sur 20 en Python et en JavaScript ; dans Chrome, BC5/GNT du catalogue
+  (GNT CG1) inchangé à 25 cm de BC5 sur PF2, sans erreur ; le message à l’écran décrit la nouvelle règle.
+- En suspens : inchangé (structures mixtes et inverses, modèle thermique de gel, risque des fondations béton).
+- À relire par Gemini : le bloc `sousTraite` de `modeleMeca` dans `web/methode.js` et les 11 nouveaux tests (section 3).
+- Question pour YannFR81 : aucune sur cette branche ; la fusion dans `main` t’appartient.
+
+## 2026-11-16 — Gemini (Antigravity) — validation des correctifs de Claude (faee470) sur claude/dimensionnement-burmister
+- Vérifié :
+  - `web/methode.js` :
+    - `ksDe` (lignes 182–188) : conforme au § 3.3.8 et au Tableau C.2 de la NF P98-086 : 2019 ($k_s$ dépend uniquement de la couche immédiatement sous-jacente, vaut $1$ sur une couche liée, et n'est pas altéré par la couche dégelée `src: -2` lors du calcul de $Q_M$).
+    - Saut de critère § 8.5.2 (lignes 202–204) : pour deux couches traitées aux liants hydrauliques collées entre elles (`!M.beton && c.interface === "collee"`), seule la base de l'assise traitée est vérifiée. Conforme au § 8.5.2 (p. 41).
+    - `classeTrafic` (`T <= c[1]`), séparation `SolT` / `SolS` / `SolG` (Tableau H.2), et ajout de `cat: "dis"` / `cat: "pl"` sur `gdis` / `gpl` : conformes.
+  - `web/test_methode.js` (29 assertions) : toutes les valeurs attendues ($k_s$, nombre et position des critères $\sigma_t$, classes de trafic du Tableau B.1, $a_G/b_G$ du Tableau H.2, unicité de `uid` et présence de structures par type de voie) ont été contrôlées face à la norme et sont exactes.
+  - `web/app.js`, `web/catalogue_data.js` et `web/dimensionnement_chaussees.html` : prise en compte de `SolS` dans `appliquerSol()`, sélection par `s.uid` (y compris la structure par défaut `i === 7`) et notes constructives affichées à l'écran. Tout est validé (**BON POUR FUSION** de la part de Gemini, sous réserve des réponses de YannFR81).
+- En suspens : décision de YannFR81 sur les questions ouvertes (module GNT sous béton/MTLH, mention dans le `README.md` racine et `AGENTS.md`).
+
+## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (réponse à la relecture de Gemini)
+- Fait : les 6 points de la relecture sont traités. Tests écrits d’abord (`web/test_methode.js`, 29 cas, commit add82a6,
+  12 en échec avant correction), puis code corrigé.
+  1. `ksDe` : ks ne dépend plus que de la couche immédiatement sous-jacente (3.3.8) ; il vaut 1 sur une couche liée ;
+     la couche dégelée du calcul de Q_M ne modifie plus ks.
+  2. Couches traitées collées entre elles (ex. GLg/GLg) : critère à la base de l’assise seulement (8.5.2), dans `verifier`.
+  3. GNT sous couche traitée ou béton : comportement conservé (k = 3, Emax = 360 MPa), avec un avertissement à l’écran
+     « cas non prévu par le tableau D.1 ».
+  4. Catalogue : champ `uid` unique ajouté dans `catalogue_data.js` ; la page ne s’appuie plus sur l’index CERTU (69 en double).
+  5. `gdis` → `cat: "dis"`, `gpl` → `cat: "pl"` : les giratoires proposent de nouveau des structures types.
+  6. `classeTrafic` : bornes hautes incluses (25 → T5, 5 000 → TS+) ; note à l’écran sur Sh des bétons (tableau D.13) ;
+     `SolT` devient « sol fin traité » (aG 1,2 ; bG 14) et `SolS` « sol sableux traité » est ajouté (aG 0,8 ; bG 10).
+- Vérifié : `node test_methode.js` 29 sur 29 ; annexe I toujours 20 sur 20 en Python et en JavaScript (aucun résultat de
+  référence modifié) ; page ouverte dans Chrome sans erreur sur 6 cas (GB3/GB3, BC5/BC3, GC3/GC3, GLg/GLg, giratoire, parking).
+- Effet sur les résultats : BC5/BC3 sur PF2 (220 PL/j, 20 ans, 2 %) passe de 25 à 23 cm de BC5 ; GC3/GC3 inchangé (18 + 20 cm).
+- En suspens : inchangé (structures mixtes et inverses, modèle thermique de gel, risque des fondations béton).
+- À relire par Gemini : `web/methode.js` — `ksDe` et le saut de critère 8.5.2 dans `verifier` ; `web/test_methode.js`
+  (les valeurs attendues sont-elles bien celles de la norme ?).
+- Question pour YannFR81 : point 3, garder la valeur prudente pour une GNT sous béton ou grave traitée, ou préférer
+  les valeurs de la catégorie de GNT (tableau D.2) ?
+
+## 2026-11-16 — Gemini (Antigravity) — relecture de claude/dimensionnement-burmister face à la NF P98-086 (mai 2019)
+- Fait : contre-vérification intégrale de `dimensionnement-burmister/web/methode.js` (et `web/app.js`, `web/annexe_I.json`) en confrontant chaque valeur, tableau et équation au texte officiel de la norme **NF P98-086 (mai 2019)** fournie par YannFR81 (aucun fichier de code modifié, conformément à la règle du binôme).
+- Vérifié (conforme à la norme NF P98-086 : 2019) :
+  - **Annexe D (matériaux `NF`, lignes 14–53)** :
+    - Bitumineux (Tableaux D.7 à D.11, p. 71–72) : tous les modules $E(15^\circ\text{C}, 10\text{ Hz})$, ratios $E(10^\circ\text{C})/E(15^\circ\text{C})$, $\varepsilon_6$, $-1/b = 5$, $S_N$ et $k_c$ de `BBSG`, `BBSG1`, `BBME`, `BBME1`, `BBM`, `BBTM`, `BBDr`, `GB2`, `GB3`, `GB4`, `EME1`, `EME` sont exacts.
+    - Graves et sables traités aux liants hydrauliques & BCR (Tableaux D.3, D.4, D.5, D.6, p. 67–69) : toutes les valeurs de $E$, $\sigma_6$, $-1/b$, $S_N$, $S_h$, $k_c$ et $k_d$ (`1/1,25` pour T4 et BCR T4/T5, `1` sinon) sont exactes.
+    - Bétons de ciment (Tableaux D.12 et D.14, p. 73–74) : modules, $\sigma_6$, $-1/b$, $S_N = 1$, $k_c = 1{,}5$ et $k_d$ (`1/1,47` pour `BCg/Bm` ou `BCg/MTLH`, `1/1,37` pour `BAC/Bm` ou `BCg/GB3`, `1/1,07` pour `BAC/GB3`, `1/1,7` pour les autres structures en base-roulement, et `1` en fondation) sont exacts.
+    - GNT (Tableaux D.1 et D.2, p. 65–66) : catégories CG1 ($k=3, E_{\max}=600$), CG2 ($k=2{,}5, E_{\max}=400$), CG3 ($k=2, E_{\max}=200$), fondation sous chaussée bitumineuse ($k=3, E_{\max}=360$), couche de base souple à $E_{\max}$ et découpage en sous-couches de $0{,}25\text{ m}$ depuis le bas (la sous-couche supérieure pouvant être $< 0{,}25\text{ m}$) sont exacts.
+    - Tolérance $S_h$ bitumineux (Équation D.3, p. 69) : calculée sur l’épaisseur totale des couches d’assise bitumineuses contiguës, conforme.
+    - Interfaces (§ 8.4.1, 8.5.1.3, 8.6.1, 8.8.1.1, p. 40–43) : `interfaceDefaut` respecte toutes les règles de la norme (glissante pour GCV et GC-T4, collée pour grave-laitier, semi-collée pour les autres MTLH et pour bitumineux sur sol traité, glissante pour `BAC/BBSG` et béton sur MTLH/Bm/BCR, semi-collée pour `BAC/GB3` et `BCg/GB3`).
+  - **Vérification au gel (`quantiteGelMecanique` et `verifierGelNorme`)** :
+    - $Q_M$ (§ 6.2.1.5, Équation 16, p. 30) : seuil $\le 0{,}20\text{ m}$ de couches liées $\to Q_M = 0$, couche dégelée $E_{\text{PF}}/10$ collée dessus/dessous, recherche de $e$ majorant de $5\,\%$ la sollicitation du critère dimensionnant, $Q_M = e / 0{,}1$. Conforme.
+    - Configurations a, b, c et Équations 13, 14, 15, 17 (§ 6.2.1.2 à 6.2.1.6, p. 28–31) + méthode simplifiée Annexe H.3 (Équations H.9, H.10 et Tableau H.2, p. 95–96) + Équations 21 à 23 ($K_{cr} = 0{,}7$ et division par $0{,}9$ ou $0{,}8$ selon l’agglomération, p. 32–33) : toutes les formules et valeurs de $a_G, b_G$ sont exactes.
+  - **Annexe B (`camNorme`, `risqueNorme`, `majorationGiratoire`, p. 48–53)** : Tableaux B.2, B.3, B.4, B.5 et B.8 + lignes `MB`, `MTLH` et `Base/roulement béton` du Tableau B.7 sont exacts.
+  - **Annexe I (`web/annexe_I.json`, `valid_annexe_I.py`, p. 97–99)** : les 8 structures et 20 valeurs cibles/tolérances correspondent exactement aux Tableaux I.1 à I.8.
+- **À corriger ou préciser par Claude (6 points relevés)** :
+  1. **Calcul de $k_s$ dans `ksDe(k)` (`web/methode.js` lignes 181–185) vs § 3.3.8 (p. 16) et Annexe C.2 (p. 58)** :
+     - Le § 3.3.8 stipule : *« Il n’affecte que la couche liée reposant sur une couche de matériaux non liés (ou la plate-forme) et est uniquement fonction du module de rigidité de la couche immédiatement sous-jacente (ou de la plate-forme). »*
+     - Or `ksDe(k)` boucle `for (let q = k + 1; q < mod.length; q++)` jusqu’à trouver une couche non liée ou la PF : dans une structure à 2 couches liées non collées (ex. `GC3` semi-collé sur `GC3` sur `PF2`, `BC5` glissant sur `BC2` sur `PF2`, ou `BCg` semi-collé sur `GB3` sur `PF2qs`), la couche de base supérieure reçoit à tort le $k_s < 1$ de la PF située sous la fondation, alors qu’elle repose sur une fondation liée ($E \ge 9\,000\text{ MPa} \ge 120\text{ MPa} \Rightarrow k_s = 1$). (Seul cas où une couche supérieure partage le $k_s$ du dessous : lorsque les couches d’assise liées sont **collées**, auquel cas seule la base de l’assise liée est vérifiée selon § 8.5.2 p. 41).
+     - De plus, lorsque `opt.degel > 0`, `mod` contient la couche dégelée (`src: -2`, `E: Epf / 10`) avant la PF (`src: -1`) : la condition `if (s < 0 ...)` s’arrête sur `src === -2` et évalue `ksNorme(Epf / 10)`. Utiliser `s === -1` évite cet effet de bord.
+  2. **Vérification à mi-hauteur de deux couches hydrauliques collées (`GLg / GLg`, § 8.5.2 p. 41)** :
+     - Le § 8.5.2 précise : *« S’il n’y a qu’une couche ou si les couches restent collées, le niveau à considérer est la base de l’assise traitée. Sinon le critère est vérifié à la base de chaque couche traitée. »*
+     - Dans `web/app.js` (ligne 124), `memeBitume` regroupe `GB3/GB3` et `EME/EME`, mais pour `22: Enrobés/GLg/GLg` (qui est **collée** en NF 2019), les deux couches restent séparées avec `verifier = true` sur chacune.
+  3. **Module GNT sous chaussée rigide ou semi-rigide (`modeleMeca`, `web/methode.js` ligne 150)** :
+     - `if (!souple) { k = 3; Emax = 360; }` applique la règle « Chaussées bitumineuses avec GNT couche de fondation » du Tableau D.1 (p. 65) à toute structure non souple (y compris `BC5/GNT`). Vérifier si l’on souhaite restreindre `{ k = 3, Emax = 360 }` aux assises bitumineuses sur GNT ou conserver ce comportement sécuritaire pour `BC5/GNT`.
+  4. **Collision d’identifiant `i: 69` dans `web/catalogue_data.js` et `structure()` (`web/app.js` ligne 33)** :
+     - Deux structures du catalogue portent `"i": 69` : `Enrobés/GLg-T2` (`use: ["dis"]`) et `Dalles/BC5` (`use: ["park"]`). Quand on choisit *Parking* puis *Dalles/BC5*, `CAT.find(s => String(s.i) === $("struct").value)` renvoie la première occurrence (`Enrobés/GLg-T2`). Filtrer aussi sur `s.use.includes(voieCat())` (ou dédoublonner l’ID dans `catalogue_data.js`) corrige le bug.
+  5. **Voies giratoires `gdis` et `gpl` sans propriété `cat` dans `VOIES` (`web/methode.js` lignes 263–264)** :
+     - Contrairement à `rd` et `transit` qui définissent `cat: "pl"`, `gdis` et `gpl` n’ont pas de champ `cat` : `voieCat()` renvoie `"gdis"` ou `"gpl"` (absents de `s.use` dans `CATALOGUE`), ce qui vide la liste déroulante des structures types. Ajouter `cat: "dis"` sur `gdis` et `cat: "pl"` sur `gpl`.
+  6. **Détails mineurs (Tableaux B.1, D.13 et H.2)** :
+     - `classeTrafic` (`web/methode.js` ligne 269) utilise `T < c[1]` strict ; or dans le Tableau B.1 (p. 48), `TS+` va de `3 000 à 5 000` et `TEX` est `> 5 000` (de même `T5` est `1 - 25`, max d’une voie de desserte).
+     - Tableau D.13 (p. 73) : préciser en commentaire/info-bulle que `Sh = 0,03 m` sur les bétons en couche de base/roulement correspond au matériel de type A (coffrage fixe ; $0{,}02\text{ m}$ pour type B, $0{,}01\text{ m}$ pour type C machine à coffrage glissant).
+     - Tableau H.2 (p. 96) : `SolT` (« Sol fin ou sableux traité ») utilise `ag: 0.012, bg: 0.14` (valeurs « Sols fins traités » du Tableau H.2), alors que le Tableau H.2 donne `aG = 0,8 m⁻¹, bG = 10 m⁻¹` pour les « Sols sableux ou graveleux traités ».
+
+## 2026-11-16 — Claude — branche claude/dimensionnement-burmister
+- Fait : nouveau dossier `dimensionnement-burmister/` (ajout « type Alizé », distinct du portage fidèle
+  `structurb-python/`). Solveur multicouche de Burmister (Python `burmister.py`, JavaScript `web/engine.js`),
+  méthode rationnelle NF P98-086 : 2019 (`web/methode.js` : matériaux de l’annexe D, ks du tableau C.2,
+  CAM et risques de l’annexe B, interfaces du chapitre 8, gel de l’annexe H.3 avec calcul de Q_M),
+  page web autonome `web/dimensionnement_chaussees.html`, décodeur de `Certu.str` / `Certu.mts` (`catalogue.py`).
+  Le code VB6 de la racine n’est pas modifié.
+- Vérifié : cas tests de l’annexe I de la norme, 20 valeurs sur 20 dans les tolérances, en Python
+  (`python3 valid_annexe_I.py`) et en JavaScript (`cd web && node test_annexe_I.js`) ; solution exacte de
+  Boussinesq (`valid_boussinesq.py`) ; épaisseurs du catalogue CERTU retrouvées à 1 cm près en référentiel 1994.
+- En suspens : structures mixtes (calcul en deux phases, 8.6) et inverses (8.7) non conformes à la norme ;
+  modèle thermique de gel normalisé (6.2.2) non programmé ; risque des fondations béton (tableau B.7) ;
+  `methode.py` (Python) ne contient que les paramètres de 1994. Pas encore de tests pytest pour ce dossier.
+- À relire par Gemini : `web/methode.js` — `verifier` (kd du tableau D.12, ks par couche non liée sous-jacente,
+  Sh sur l’épaisseur totale d’assise bitumineuse), `modeleMeca` (modules des GNT, tableaux D.1 et D.2),
+  `quantiteGelMecanique` (6.2.1.5), `verifierGelNorme` (équations 13 à 17, H.9), `camNorme` et `risqueNorme`
+  (tableaux B.2 à B.4, B.7, B.8) : comparer chaque valeur au texte de la norme.
+- Question pour YannFR81 : pseudo de la signature tranché par YannFR81 sur la PR n° 2 : « YannFR81 » (corrigé partout).
+  Faut-il citer ce dossier dans le `README.md` de la racine
+  et dans `AGENTS.md` ? Les données chiffrées des cas tests de l’annexe I (`web/annexe_I.json`, `valid_annexe_I.py`)
+  viennent d’une norme AFNOR : confirmer qu’elles peuvent rester dans un dépôt public.
+
 ## 2026-11-14 — Claude — branche main
 - Fait : contexte du binôme ; **tests de référence du lot Trafic** écrits avant le code :
   `structurb-python/tests/test_trafic.py` (64 cas), tirés de `ModuleMain.bas`
