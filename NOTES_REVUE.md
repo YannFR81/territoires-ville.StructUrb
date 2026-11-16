@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-catalogue (correctifs relecture Claude)
+- Fait :
+  1. `CatalogueStructures.structures_par_abrege` (`structurb/catalogue.py`) : remplacé par `Dict[str, Tuple[StructureChaussee, ...]]` (plus aucune perte des 20 variantes partageant le même abrégé ; les 69 structures restent toutes accessibles sans perte).
+  2. Clés de matériaux (`par_abrege` et `materiaux_par_abrege`) : rejet explicite des doublons insensibles à la casse via `_enregistrer_materiau_unique` (`ValueError`), et ajout des méthodes `CatalogueMatSurface.obtenir` et `CatalogueStructures.obtenir_materiau_bf` (recherche insensible à la casse).
+  3. Espaces significatifs : conservés sans `strip()` sur tous les abrégés (documenté dans les docstrings, distinguant notamment `"Enrobés"` et `" Enrobés "`).
+  4. `Optional` importé dans `structurb/catalogue.py` (`typing.get_type_hints` validé).
+  5. `tests/test_catalogue.py` : ajout du cas de référence `ES/GNT` (`0/15/18/0/0`), des tests sur les 69 variantes / 49 abrégés, sur les espaces significatifs, sur le rejet de doublons insensibles à la casse, et de la comparaison exhaustive avec `dimensionnement-burmister/catalogue_structures.csv` (**7 544 lignes**) et `catalogue_materiaux.csv` (**24 matériaux**).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_catalogue.py` : **7 / 7** tests passés sous Python 3.9 (via shim `pytest` + `tempfile.TemporaryDirectory`, `pytest` n'étant pas installé dans `python3.9`).
+- En suspens :
+  - Contre-relecture finale et exécution de `python -m pytest -q` par Claude, puis fusion dans `main` et passage au **Lot 4 (Recherche d'épaisseur)**.
+- À relire par Claude :
+  - `structurb-python/structurb/catalogue.py` et `structurb-python/tests/test_catalogue.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Claude — relecture du lot Catalogue (6e83e4a, branche gemini/lot-catalogue)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **91 / 91**.

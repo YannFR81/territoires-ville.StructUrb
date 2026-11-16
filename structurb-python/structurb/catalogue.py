@@ -12,7 +12,7 @@ from __future__ import annotations
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, Dict, Tuple, Union
+from typing import BinaryIO, Dict, Optional, Tuple, Union
 
 ENTETE_MTS: str = "Fichier de matériaux de surfaces"
 ENTETE_STR_V100: str = "Fichier de structures de chaussées pour Struct-urb"
@@ -88,12 +88,26 @@ class MateriauCompose:
 
 @dataclass(frozen=True)
 class CatalogueMatSurface:
-    """Contenu complet d'un fichier ``*.mts``."""
+    """Contenu complet d'un fichier ``*.mts``.
+
+    Note : les abrégés conservent leurs espaces significatifs (ex. ``"Enrobés"``
+    et ``" Enrobés "`` pour les giratoires) — ne jamais leur appliquer ``strip()``.
+    """
 
     simples: Tuple[MateriauSimple, ...]
     mecaniques: Tuple[MateriauMecanique, ...]
     composes: Tuple[MateriauCompose, ...]
     par_abrege: Dict[str, Union[MateriauSimple, MateriauMecanique, MateriauCompose]]
+
+    def obtenir(self, abrege: str) -> Union[MateriauSimple, MateriauMecanique, MateriauCompose]:
+        """Recherche un matériau de surface par abrégé (insensible à la casse, espaces conservés)."""
+        if abrege in self.par_abrege:
+            return self.par_abrege[abrege]
+        cle_min = abrege.lower()
+        for k, v in self.par_abrege.items():
+            if k.lower() == cle_min:
+                return v
+        raise KeyError(f"Matériau de surface inconnu : {abrege!r}")
 
 
 @dataclass(frozen=True)
@@ -140,12 +154,29 @@ class StructureChaussee:
 
 @dataclass(frozen=True)
 class CatalogueStructures:
-    """Contenu complet d'un fichier ``*.str`` (v2.0.0+)."""
+    """Contenu complet d'un fichier ``*.str`` (v2.0.0+).
+
+    Note : ``structures`` conserve les 69 structures dans l'ordre du catalogue
+    (identifiables par leur position, comme la ``Collection`` VB6). Plusieurs
+    variantes peuvent partager le même abrégé (ex. ``Enrobés/GNT``) :
+    ``structures_par_abrege`` associe donc à chaque abrégé le tuple de toutes
+    ses variantes, sans perte ni suppression d'espaces.
+    """
 
     structures: Tuple[StructureChaussee, ...]
     materiaux_bf: Tuple[MateriauMecanique, ...]
-    structures_par_abrege: Dict[str, StructureChaussee]
+    structures_par_abrege: Dict[str, Tuple[StructureChaussee, ...]]
     materiaux_par_abrege: Dict[str, MateriauMecanique]
+
+    def obtenir_materiau_bf(self, abrege: str) -> MateriauMecanique:
+        """Recherche un matériau base/fondation par abrégé (insensible à la casse, espaces conservés)."""
+        if abrege in self.materiaux_par_abrege:
+            return self.materiaux_par_abrege[abrege]
+        cle_min = abrege.lower()
+        for k, v in self.materiaux_par_abrege.items():
+            if k.lower() == cle_min:
+                return v
+        raise KeyError(f"Matériau base/fondation inconnu : {abrege!r}")
 
 
 def _lire_string(f: BinaryIO) -> Optional[str]:
@@ -194,6 +225,21 @@ def _lire_commentaire(f: BinaryIO) -> str:
     return "".join(parties)
 
 
+def _enregistrer_materiau_unique(
+    table: Dict[str, object],
+    cles_vues: set[str],
+    abrege: str,
+    objet: object,
+    contexte: str,
+) -> None:
+    """Enregistre un matériau dans ``table`` en refusant tout doublon insensible à la casse."""
+    cle_min = abrege.lower()
+    if cle_min in cles_vues:
+        raise ValueError(f"Abrégé de matériau en double ({contexte}) : {abrege!r}")
+    cles_vues.add(cle_min)
+    table[abrege] = objet
+
+
 def ouvrir_fichier_mat_surface(chemin: str | Path) -> CatalogueMatSurface:
     """Charge un fichier de matériaux de surface ``*.mts`` (ex. ``Certu.mts``).
 
@@ -207,6 +253,7 @@ def ouvrir_fichier_mat_surface(chemin: str | Path) -> CatalogueMatSurface:
     mecaniques: list[MateriauMecanique] = []
     composes: list[MateriauCompose] = []
     par_abrege: Dict[str, Union[MateriauSimple, MateriauMecanique, MateriauCompose]] = {}
+    cles_vues: set[str] = set()
 
     with path.open("rb") as f:
         entete = _lire_string(f)
@@ -252,7 +299,7 @@ def ouvrir_fichier_mat_surface(chemin: str | Path) -> CatalogueMatSurface:
                         commentaire=commentaire,
                     )
                     mecaniques.append(mat)
-                par_abrege[abrege] = mat
+                _enregistrer_materiau_unique(par_abrege, cles_vues, abrege, mat, path.name)
             elif type_mat == "MatériauComposé":
                 nom = _lire_string(f) or ""
                 abrege = _lire_string(f) or ""
@@ -285,7 +332,7 @@ def ouvrir_fichier_mat_surface(chemin: str | Path) -> CatalogueMatSurface:
                     compositions=tuple(comps),
                 )
                 composes.append(mc)
-                par_abrege[abrege] = mc
+                _enregistrer_materiau_unique(par_abrege, cles_vues, abrege, mc, path.name)
             else:
                 raise ValueError(f"Type de matériau de surface inconnu dans {path.name} : {type_mat!r}")
 
@@ -308,8 +355,9 @@ def ouvrir_fichier_structures(chemin: str | Path) -> CatalogueStructures:
 
     structures: list[StructureChaussee] = []
     materiaux_bf: list[MateriauMecanique] = []
-    structures_par_abrege: Dict[str, StructureChaussee] = {}
+    structures_par_abrege_tmp: Dict[str, list[StructureChaussee]] = {}
     materiaux_par_abrege: Dict[str, MateriauMecanique] = {}
+    cles_bf_vues: set[str] = set()
 
     with path.open("rb") as f:
         entete = _lire_string(f)
@@ -395,7 +443,7 @@ def ouvrir_fichier_structures(chemin: str | Path) -> CatalogueStructures:
                     grilles_pf=grilles_pf,
                 )
                 structures.append(st)
-                structures_par_abrege[abrege] = st
+                structures_par_abrege_tmp.setdefault(abrege, []).append(st)
 
             elif type_elem == "MatériauFondBase":
                 nom = _lire_string(f) or ""
@@ -418,13 +466,13 @@ def ouvrir_fichier_structures(chemin: str | Path) -> CatalogueStructures:
                     commentaire=commentaire,
                 )
                 materiaux_bf.append(mat_bf)
-                materiaux_par_abrege[abrege] = mat_bf
+                _enregistrer_materiau_unique(materiaux_par_abrege, cles_bf_vues, abrege, mat_bf, path.name)
             else:
                 raise ValueError(f"Élément inconnu dans {path.name} : {type_elem!r}")
 
     return CatalogueStructures(
         structures=tuple(structures),
         materiaux_bf=tuple(materiaux_bf),
-        structures_par_abrege=structures_par_abrege,
+        structures_par_abrege={k: tuple(v) for k, v in structures_par_abrege_tmp.items()},
         materiaux_par_abrege=materiaux_par_abrege,
     )
