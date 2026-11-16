@@ -16,6 +16,38 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture du lot Catalogue (6e83e4a, branche gemini/lot-catalogue)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **91 / 91**.
+  - Lecture binaire comparée champ par champ à `OuvrirFichierStructures` et `OuvrirFichierMatSurface` : ordre et tailles
+    conformes (`Integer` et `Boolean` sur 2 octets, `Byte` 1, `Long` 4, `Single` 4, chaînes `Long` + octets cp1252,
+    commentaires concaténés jusqu’à `FIN_COMMENT`, `unNbTot \ 8` lignes par grille, 8 grilles dans l’ordre de `DonnerColPF`).
+  - Contrôle indépendant : comparaison avec l’extraction faite par un autre décodeur (`dimensionnement-burmister/catalogue.py`,
+    `catalogue_structures.csv`) : **7 544 lignes d’épaisseur identiques** (abrégé, grille, 5 épaisseurs, Qm, min. technique,
+    max. pratique) ; **24 matériaux identiques** (Agel, Bgel, E, ν, ε6, σ6, y compris les 2 matériaux composés).
+- **À corriger (bloquant pour le lot 4)** :
+  1. `structures_par_abrege` perd des structures : 69 structures mais **49 abrégés distincts** (ex. `Enrobés/GNT` existe
+     deux fois, index 9 pour 1 000 à 100 000 essieux et index 37 pour 10 000 à 20 000). Le dictionnaire garde la dernière,
+     sans prévenir : 20 structures inaccessibles par cette voie. En VB6, `uneColStruct.Add uneStruct` n’a **pas de clé**.
+     De plus, `num_index` n’est pas unique non plus (**69** pour `Enrobés/GLg-T2` et pour `Dalles/BC5`).
+     Proposition : supprimer `structures_par_abrege`, ou le remplacer par `Dict[str, Tuple[StructureChaussee, ...]]` ;
+     identifier une structure par sa position dans `structures` (comme la collection VB6), à confirmer au lot 4
+     avec `DonnerStructChoisie`.
+- À corriger (non bloquant) :
+  2. Clés des collections VB6 : la recherche par clé est **insensible à la casse** et un doublon de clé fait échouer
+     le chargement (erreur 457). Les dictionnaires Python (`par_abrege`, `materiaux_par_abrege`) sont sensibles à la casse
+     et écrasent les doublons sans rien dire. Aucun cas dans les fichiers Certu, mais un fichier personnel peut en contenir :
+     lever une erreur sur doublon (comparaison sans casse) et chercher sans casse.
+  3. Les abrégés contiennent des espaces significatifs : `Enrobés` et ` Enrobés ` sont deux matériaux composés distincts
+     (le second pour les giratoires). Ne jamais appliquer `strip()` aux abrégés (à écrire dans la docstring).
+  4. Tests trop faibles : seulement des comptages et des signes. Ajouter des valeurs de référence (par ex. `ES/GNT`, PF1 Q1,
+     1re ligne : 0 / 15 / 18 / 0 / 0) et un test qui compare toute la lecture à `dimensionnement-burmister/catalogue_structures.csv`
+     et `catalogue_materiaux.csv` (le contrôle ci-dessus, 7 544 lignes et 24 matériaux), plus un test sur les abrégés en double.
+  5. `Optional` est utilisé dans une annotation sans être importé (sans effet grâce à `from __future__ import annotations`,
+     mais `typing.get_type_hints` échouerait).
+- Verdict : **À CORRIGER** (point 1). La lecture binaire elle-même est exacte.
+- Question pour YannFR81 : aucune.
+
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-catalogue
 - Fait :
   1. Portage complet du **Lot 3 (Catalogue)** dans `structurb-python/structurb/catalogue.py` et export dans `structurb/__init__.py` :
