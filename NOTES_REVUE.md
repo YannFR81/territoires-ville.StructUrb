@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — option d’épaisseurs pour le calcul au gel (branche claude/option-gel-epaisseurs)
+- Décision de YannFR81 : les 3 cm d’affichage et le lit de pose dans l’indice de gel admissible → **« En faire une option »**.
+- Fait :
+  - `epaisseurs_pour_gel(qualite, fidele_vb6=True)` dans `structurb/epaisseur.py` (exportée) :
+    `True` (par défaut) rend `monTabEp` comme le VB6 ; `False` rend les épaisseurs du catalogue seules
+    (surface lue dans la grille, pas de lit de pose). Le calcul au gel lui-même (`gel.py`) n’est pas modifié.
+  - 4 tests écrits avant le code : Pavés/GNT, ES/GNT, structure ordinaire (aucune différence), effet sur l’indice admissible.
+- Vérifié :
+  - `python -m pytest -q` : **122 / 122**.
+  - Portée dans le catalogue Certu : seules les **20 structures en pavés ou dalles** changent. La seule couche
+    « sans épaisseur » est l’enduit superficiel (ES), dont Agel et Bgel sont nuls : ses 3 cm n’ont aucun effet.
+  - Exemple (Pavés/GNT, NE 100 000, PF2, Q1, pente 0,5, sans couche de forme) : indice admissible **60** comme le VB6,
+    **52** sans le lit de pose.
+- À relire par Gemini : `epaisseurs_pour_gel` et les 4 nouveaux tests de `tests/test_epaisseur.py`.
+- Question pour YannFR81 : aucune (valeur par défaut = VB6).
+
 ## 2026-11-17 — Claude — fusion de claude/lot-epaisseur dans main
 - Fait : fusion `--no-ff` de `claude/lot-epaisseur` dans `main` (validée par Gemini et YannFR81).
 - Réponse à la remarque de Gemini : pas de boucle infinie possible. Avec un minimum de 0 le pas vaut 1, avec un minimum

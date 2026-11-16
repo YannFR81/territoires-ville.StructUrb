@@ -208,3 +208,53 @@ def test_balayage_complet_contre_csv(cat):
 def test_plates_formes():
     assert PLATES_FORMES == ("PF1", "PF2", "PF2+", "PF3")
     assert len(GRILLES_PF) == 2 * len(PLATES_FORMES)
+
+
+# --- Option : épaisseurs transmises au calcul de l'indice de gel admissible ---
+
+def test_epaisseurs_pour_gel_paves(cat):
+    from structurb.epaisseur import epaisseurs_pour_gel
+
+    res = rechercher_epaisseur(100000, cat.structures[49], "PF2")  # Pavés/GNT
+    # Par défaut : comme le VB6 (lit de pose compté)
+    assert epaisseurs_pour_gel(res.q1) == (8, 4, 18, 0, 0, 0)
+    assert epaisseurs_pour_gel(res.q1, fidele_vb6=True) == (8, 4, 18, 0, 0, 0)
+    # Option : épaisseurs du catalogue seules
+    assert epaisseurs_pour_gel(res.q1, fidele_vb6=False) == (8, 0, 18, 0, 0, 0)
+
+
+def test_epaisseurs_pour_gel_surface_sans_epaisseur(cat):
+    from structurb.epaisseur import epaisseurs_pour_gel
+
+    res = rechercher_epaisseur(15000, cat.structures[0], "PF2")  # ES/GNT
+    assert epaisseurs_pour_gel(res.q1) == (3, 0, 15, 17, 0, 0)
+    assert epaisseurs_pour_gel(res.q1, fidele_vb6=False) == (0, 0, 15, 17, 0, 0)
+
+
+def test_epaisseurs_pour_gel_structure_ordinaire(cat):
+    from structurb.epaisseur import epaisseurs_pour_gel
+
+    res = rechercher_epaisseur(9000, cat.structures[1], "PF2")  # Enrobés/GNT : aucune correction
+    assert epaisseurs_pour_gel(res.q1) == epaisseurs_pour_gel(res.q1, fidele_vb6=False) == (4, 0, 15, 0, 0, 0)
+
+
+def test_option_change_indice_gel_admissible_paves(cat):
+    from structurb.catalogue import ouvrir_fichier_mat_surface
+    from structurb.epaisseur import epaisseurs_pour_gel
+    from structurb.gel import indice_gel_admissible
+
+    mts = ouvrir_fichier_mat_surface(REPO_ROOT / "Certu.mts")
+    s = cat.structures[49]  # Pavés/GNT
+    surf, base = mts.obtenir(s.couche_surface), cat.obtenir_materiau_bf(s.couche_base)
+    res = rechercher_epaisseur(100000, s, "PF2")
+    commun = dict(
+        agel=(surf.a_gel, base.a_gel, 0.0),
+        bgel=(surf.b_gel, base.b_gel, 0.0),
+        qm=res.q1.qm,
+        epaisseur_non_gelive_cm=0.0,
+        pente_sol_pourcent=0.5,
+    )
+    i_vb6 = indice_gel_admissible(epaisseurs_pour_gel(res.q1), **commun)
+    i_cat = indice_gel_admissible(epaisseurs_pour_gel(res.q1, fidele_vb6=False), **commun)
+    # Le lit de pose (4 cm) protège : l'indice admissible du VB6 est plus élevé
+    assert i_vb6 > i_cat

@@ -22,6 +22,7 @@ from .epaisseur import (
     ResultatEpaisseur,
     ResultatQualite,
     epaisseur_possible,
+    epaisseurs_pour_gel,
     ne_theorique_et_indice,
     rechercher_epaisseur,
 )
@@ -84,6 +85,7 @@ __all__ = [
     "chaussee_verifiee_au_gel",
     "coef_couche_forme_non_gelive",
     "epaisseur_possible",
+    "epaisseurs_pour_gel",
     "etude_labo_conseillee",
     "indice_gel_admissible",
     "indice_gel_reference",
