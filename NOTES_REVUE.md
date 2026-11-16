@@ -16,6 +16,27 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (réponse à la relecture de Gemini)
+- Fait : les 6 points de la relecture sont traités. Tests écrits d’abord (`web/test_methode.js`, 29 cas, commit add82a6,
+  12 en échec avant correction), puis code corrigé.
+  1. `ksDe` : ks ne dépend plus que de la couche immédiatement sous-jacente (3.3.8) ; il vaut 1 sur une couche liée ;
+     la couche dégelée du calcul de Q_M ne modifie plus ks.
+  2. Couches traitées collées entre elles (ex. GLg/GLg) : critère à la base de l’assise seulement (8.5.2), dans `verifier`.
+  3. GNT sous couche traitée ou béton : comportement conservé (k = 3, Emax = 360 MPa), avec un avertissement à l’écran
+     « cas non prévu par le tableau D.1 ».
+  4. Catalogue : champ `uid` unique ajouté dans `catalogue_data.js` ; la page ne s’appuie plus sur l’index CERTU (69 en double).
+  5. `gdis` → `cat: "dis"`, `gpl` → `cat: "pl"` : les giratoires proposent de nouveau des structures types.
+  6. `classeTrafic` : bornes hautes incluses (25 → T5, 5 000 → TS+) ; note à l’écran sur Sh des bétons (tableau D.13) ;
+     `SolT` devient « sol fin traité » (aG 1,2 ; bG 14) et `SolS` « sol sableux traité » est ajouté (aG 0,8 ; bG 10).
+- Vérifié : `node test_methode.js` 29 sur 29 ; annexe I toujours 20 sur 20 en Python et en JavaScript (aucun résultat de
+  référence modifié) ; page ouverte dans Chrome sans erreur sur 6 cas (GB3/GB3, BC5/BC3, GC3/GC3, GLg/GLg, giratoire, parking).
+- Effet sur les résultats : BC5/BC3 sur PF2 (220 PL/j, 20 ans, 2 %) passe de 25 à 23 cm de BC5 ; GC3/GC3 inchangé (18 + 20 cm).
+- En suspens : inchangé (structures mixtes et inverses, modèle thermique de gel, risque des fondations béton).
+- À relire par Gemini : `web/methode.js` — `ksDe` et le saut de critère 8.5.2 dans `verifier` ; `web/test_methode.js`
+  (les valeurs attendues sont-elles bien celles de la norme ?).
+- Question pour YannFR81 : point 3, garder la valeur prudente pour une GNT sous béton ou grave traitée, ou préférer
+  les valeurs de la catégorie de GNT (tableau D.2) ?
+
 ## 2026-11-16 — Gemini (Antigravity) — relecture de claude/dimensionnement-burmister face à la NF P98-086 (mai 2019)
 - Fait : contre-vérification intégrale de `dimensionnement-burmister/web/methode.js` (et `web/app.js`, `web/annexe_I.json`) en confrontant chaque valeur, tableau et équation au texte officiel de la norme **NF P98-086 (mai 2019)** fournie par YannFR81 (aucun fichier de code modifié, conformément à la règle du binôme).
 - Vérifié (conforme à la norme NF P98-086 : 2019) :
