@@ -1,0 +1,17 @@
+DIMENSIONNEMENT DE CHAUSSÉES — BURMISTER + STRUCT-URB
+Version 1.0 — novembre 2026
+
+Pour une fonction publique augmentée, pas remplacée.
+
+Développé par YannPRO81, agent territorial au sein d'un conseil
+départemental, et Claude, IA d'Anthropic.
+L'agent a posé le besoin, piloté et vérifié. L'IA a codé, calculé et testé.
+
+Validé sur les 8 cas tests de l'annexe I de la NF P98-086 : 20 valeurs sur 20.
+
+Publié sur GitHub, dans un fork du dépôt Struct-Urb du Cerema :
+https://github.com/YannFR81/territoires-ville.StructUrb
+(dossier dimensionnement-burmister/)
+Licence GNU GPL v3, comme l'original. Sources ouvertes, réutilisation libre.
+
+Outil de prédimensionnement, fourni sans garantie.

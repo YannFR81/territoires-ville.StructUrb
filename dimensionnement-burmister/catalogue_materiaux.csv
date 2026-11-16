@@ -1,0 +1,25 @@
+﻿couche;abrege;nom;norme;qualite_gel;a_gel;b_gel;E_MPa;nu;eps6_microdef;sigma6_MPa
+base/fondation;GNT;Grave non traitée;NF EN 13285;1;0.008;0.1;600.0;0.35;0.0;0.0
+base/fondation;EME;Enrobés à Module Élevé;NF EN 13108-1;2;0.008;0.06;14000.0;0.35;130.0;0.0
+base/fondation;GB3;Grave Bitume;NF EN 13108-1;3;0.008;0.06;9000.0;0.35;90.0;0.0
+base/fondation;GC3;Grave Ciment;NF EN 14227-1;T3;0.008;0.1;23000.0;0.25;0.0;0.75
+base/fondation;BC5;Béton de ciment ;NF EN 13877-1;S2,7;0.008;0.1;35000.0;0.25;0.0;2.15
+base/fondation;BC3;Béton maigre;NF EN 13877-1;S2,0;0.008;0.1;24000.0;0.25;0.0;1.63
+base/fondation;SC;Sable Ciment;NF EN 14227-1;T3;0.012;0.15;17200.0;0.25;0.0;0.75
+base/fondation;SL;Sable Laitier;NF P 98-113;SL3;0.012;0.15;12500.0;0.25;0.0;0.65
+base/fondation;GLg;Grave Laitier Granulé;NF EN 14227-2;T1;0.008;0.1;15000.0;0.25;0.0;0.5
+base/fondation;GCV;Grave Cendre Volantes;NF EN 14227-3;T3;0.012;0.13;30000.0;0.25;0.0;1.15
+base/fondation;GB2;GRAVE BITUME 2;NF EN 13108-1;2;0.008;0.06;9000.0;0.35;80.0;0.0
+base/fondation;GE;Grave Émulsion;NF P 98-121;GE3;0.0;0.0;2500.0;0.35;0.0;0.0
+base/fondation;BC5g;Béton de ciment goujonné;NF EN 13877-1;S2,7;0.008;0.1;35000.0;0.25;0.0;2.15
+base/fondation;GLg-T2;Grave Laitier granulé T2;NF EN 14227-2;T2;0.008;0.1;15000.0;0.25;0.0;0.6
+surface;ES;Enduit Superficiel;NF P 98-160;;0.0;0.0;;;;
+surface;BBSG;Béton Bitumineux Semi Grenu;NF EN 13108-1;2 ou 3;0.008;0.06;7000.0;0.35;100.0;0.0
+surface;BBME;Béton Bitumineux à Module Élevé;NF EN 13108-1;2 ou 3;0.008;0.06;11000.0;0.35;100.0;0.0
+surface;BBM;Béton Bitumineux Mince;NF EN 13108-1;;0.008;0.06;5500.0;0.35;100.0;0.0
+surface;Enrobés;Enrobés;;;0.008;0.06;;;;
+surface;BBTM;Béton Bitumineux Très Mince;NF EN 13108-2;;0.008;0.06;3000.0;0.35;100.0;0.0
+surface;BBDr;Béton Bitumineux Drainant;NF EN 13108-7;;0.008;0.06;3000.0;0.35;0.0;0.0
+surface;Dalles;Dalles;;;0.008;0.1;;;;
+surface;Pavés;Pavés;;;0.008;0.1;;;;
+surface;Enrobés;Enrobés pour giratoires;;;0.008;0.06;;;;
