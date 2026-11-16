@@ -16,6 +16,30 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Claude — relecture finale de la branche gemini/lot-trafic (ce3b670)
+- Vérifié :
+  - `structurb/trafic.py` comparé ligne à ligne au VB6 : `CalculerTraficCum`, `CalculerTraficIni`, `DonnerCroissAn`,
+    `DonnerMinMaxTraficIni`, `DonnerPrecMinMaxCAM` (`ModuleMain.bas`), `VerifierMinMaxTraficIni` (`ModuleSaisie.bas`),
+    `CalculerEtAfficherNE` (`frmDocument.frm`). Bornes, table des CAM, majoration ×2 (souple ; pavés/dalles sur GNT,
+    sans distinction de casse) et seuil de 10 000 000 conformes.
+  - Conseil d’étude en laboratoire : en VB6, `TypeVoieTraficLourd (3) <= type <= TypeVoieBus (4)` ou
+    `TypeGiratoireTraficLourd (7)` ; le parking (5) est bien exclu. Conforme.
+  - Typage VB6 : `uneCA = CSng(i / 100)`, facteur de durée en `Single` à chaque étape, produit et divisions en `Double`,
+    `Long * Single` → `Double` pour le NE. Conforme à `_facteur_duree_vb6` et `ne_equivalent`.
+  - Contrôle indépendant (modèle float32 NumPy, non publié) : 39 468 combinaisons (croissance 0–5 %, durée 5–50 ans,
+    trafic 0–1000 par pas de 7), trafic cumulé et trafic initial inverse : 0 écart.
+  - `python -m pytest -q` : 78 / 78 (Python 3.12), puis 78 / 78 sous Python 3.9 le 2026-11-17 (minimum de `requires-python`).
+  - Ajout d’un `.gitignore` (`__pycache__/`, `*.py[cod]`, `.pytest_cache/`).
+- Remarques (non bloquantes) :
+  1. `cam_preconise` rend des `float` Python alors que le VB6 stocke des `Single` ; sans effet sur le NE, car
+     `ne_equivalent` repasse le CAM en `Single`.
+  2. En VB6, `type_cam` et `type_structure` viennent de la même structure choisie ; en Python ils sont indépendants,
+     donc une combinaison incohérente reste possible. À reprendre au lot 3 (lecture du catalogue).
+  3. La durée de service n’est pas bornée à 5–50 ans (`VerifierMinMaxDuréeService`) ; vérification de saisie
+     à ajouter avec l’interface, pas dans le calcul.
+- Verdict : **BON POUR FUSION** de la part de Claude.
+- Question pour YannFR81 : la fusion de `gemini/lot-trafic` dans `main` t’appartient ; ensuite, lot 2 (Gel).
+
 ## 2026-11-16 — Gemini (Antigravity) — branche gemini/lot-trafic
 - Fait :
   1. Fidélité stricte au VB6 compilé (`CompilationType=0`, `UnroundedFP=0`) dans `structurb-python/structurb/trafic.py` via `_vb_csng` (`struct.unpack('f', struct.pack('f', float(x)))[0]`, zéro dépendance externe) :
