@@ -41,7 +41,8 @@
     SC2:   hyd("Sable-ciment / SCV-chaux / SLHR T2", 12000, 0.50, 12, 0.8, 1.5, { Sh: 0.025, ag: 0.012, bg: 0.15 }),
     SL:    hyd("Sable-laitier T3", 12500, 0.65, 10, 0.8, 1.5, { Sh: 0.025, ag: 0.012, bg: 0.15 }),
     SL2:   hyd("Sable-laitier T2", 8500, 0.43, 10, 0.8, 1.5, { Sh: 0.025, ag: 0.012, bg: 0.15 }),
-    SolT:  hyd("Sol fin ou sableux traité (E et σ6 d’étude)", 12000, 0.50, 11, 0.8, 1.4, { Sh: 0.04, ag: 0.012, bg: 0.14, sol: true, saisie: true }),
+    SolT:  hyd("Sol fin traité (E et σ6 d’étude)", 12000, 0.50, 11, 0.8, 1.4, { Sh: 0.04, ag: 0.012, bg: 0.14, sol: true, saisie: true }),
+    SolS:  hyd("Sol sableux traité (E et σ6 d’étude)", 12000, 0.50, 11, 0.8, 1.4, { Sh: 0.04, ag: 0.008, bg: 0.10, sol: true, saisie: true }),
     SolG:  hyd("Sol graveleux traité (E et σ6 d’étude)", 12000, 0.50, 11, 1, 1.4, { Sh: 0.05, ag: 0.008, bg: 0.10, sol: true, saisie: true }),
     BC5:   hyd("Béton BC5, dalles non goujonnées", 35000, 2.15, 16, 1, 1.5, { beton: "ng" }),
     BC5g:  hyd("Béton BC5, dalles goujonnées", 35000, 2.15, 16, 1, 1.5, { beton: "g" }),
@@ -180,8 +181,10 @@
     const souple = estSouple(couches);
     const ksDe = (k) => {              // module de la première couche non liée sous la couche modèle k (annexe C.2)
       if (!nf) return PLATEFORMES[ctx.pf].ks;
-      for (let q = k + 1; q < mod.length; q++) { const s = mod[q].src; if (s < 0 || MATERIAUX[couches[s].mat].fam === "non_lie") return ksNorme(mod[q].E); }
-      return 1;
+      // 3.3.8 : ks ne dépend que de la couche immédiatement sous-jacente, et vaut 1 si elle est liée
+      const dessous = mod[k + 1];
+      if (dessous.src < 0) return ksNorme(PLATEFORMES[ctx.pf].E);          // plate-forme (une couche dégelée ne change pas ks)
+      return MATERIAUX[couches[dessous.src].mat].fam === "non_lie" ? ksNorme(dessous.E) : 1;
     };
     couches.forEach((c, i) => {
       if (c.h_cm <= 0) return;
@@ -196,6 +199,9 @@
         const adm = 1e-6 * M.eps6 * Math.sqrt(M.E10 / M.E) * Math.pow(NE / 1e6, -1 / M.invb) * M.kc * kr(val(ctx.risque, "bitumineux"), M.invb, M.SN, ShBitumineux(h / 100)) * ks;
         crit.push({ couche: i, mat: c.mat, type: "εt base", calc: sol[bas].eps_t, adm, unite: "µdef", f: 1e6, fatigue: true, k: bas, g: "eps_t", NE, ks });
       } else if (M.fam === "hydraulique" && c.verifier) {
+        // 8.5.2 : couches traitées collées entre elles → critère à la base de l’assise seulement
+        const suiv = couches.slice(i + 1).find(x => x.h_cm > 0), Ms = suiv && MATERIAUX[suiv.mat];
+        if (nf && !M.beton && c.interface === "collee" && Ms && Ms.fam === "hydraulique" && !Ms.beton) return;
         const audessus = couches.slice(0, i).filter(x => x.h_cm > 0);
         const hydDessus = audessus.some(x => MATERIAUX[x.mat].fam === "hydraulique");
         let kd = M.kd, fam = M.sol ? "sol" : "hydraulique";
@@ -260,13 +266,13 @@
     dis: { nom: "Urbain — avenue, boulevard, voie de distribution", nf: "avenue", tmin: 25, tmax: 150, tminT: 20, tmaxT: 170, cam: [[0.1, 0.05, 0.6], [0.2, 0.1, 0.6]], risque: 25, A: 0.012 },
     pl:  { nom: "Urbain — voie principale à trafic lourd", nf: "lourd", tmin: 150, tmax: 750, tminT: 120, tmaxT: 1000, cam: [[0.2, 0.1, 0.8], [0.4, 0.2, 1.0]], risque: 5, A: 0.012 },
     bus: { nom: "Urbain — voie réservée aux bus", nf: "lourd", tmin: 0, tmax: 750, tminT: 0, tmaxT: 1000, cam: [[0.5, 0.2, 1.0], [0.5, 0.2, 1.0]], risque: 5, A: 0.012 },
-    gdis:{ nom: "Giratoire sur voie de distribution", nf: "giratoire", tmin: 25, tmax: 150, tminT: 20, tmaxT: 170, cam: [[0.5, 0.2, 1.0], [0.5, 0.2, 1.0]], risque: 5, A: 0.012 },
-    gpl: { nom: "Giratoire sur voie principale ou route départementale", nf: "giratoire", tmin: 150, tmax: 750, tminT: 120, tmaxT: 1000, cam: [[1.0, 0.5, 1.5], [1.0, 0.5, 1.5]], risque: 5, A: 0.012 },
+    gdis:{ nom: "Giratoire sur voie de distribution", nf: "giratoire", cat: "dis", tmin: 25, tmax: 150, tminT: 20, tmaxT: 170, cam: [[0.5, 0.2, 1.0], [0.5, 0.2, 1.0]], risque: 5, A: 0.012 },
+    gpl: { nom: "Giratoire sur voie principale ou route départementale", nf: "giratoire", cat: "pl", tmin: 150, tmax: 750, tminT: 120, tmaxT: 1000, cam: [[1.0, 0.5, 1.5], [1.0, 0.5, 1.5]], risque: 5, A: 0.012 },
     park:{ nom: "Parking, aire de stationnement", nf: "resid", tmin: 0, tmax: 750, tminT: 0, tmaxT: 1000, cam: [[0.1, 0.05, 0.4], [0.1, 0.05, 0.4]], risque: 25, A: 0.016 },
   };
   for (const k of ["rd", "transit"]) Object.assign(VOIES[k], { tmin: 0, tmax: 1e9, tminT: 0, tmaxT: 1e9, cam: VOIES.pl.cam, risque: 5, A: 0.012 });
   const CLASSES = [["T5", 25], ["T4", 50], ["T3-", 85], ["T3+", 150], ["T2-", 200], ["T2+", 300], ["T1-", 500], ["T1+", 750], ["T0-", 1200], ["T0+", 2000], ["TS-", 3000], ["TS+", 5000], ["TEX", Infinity]]; // tableau B.1
-  const classeTrafic = (T) => CLASSES.find(c => T < c[1])[0];
+  const classeTrafic = (T) => CLASSES.find(c => T <= c[1])[0];   // bornes hautes incluses : 5 000 PL/j = TS+, TEX au-delà
   function camNorme(ctxVoie, T) {      // tableaux B.2, B.3, B.4
     if (ctxVoie === "transit") return { bitumineux: 0.8, hydraulique: 1.3, sol: 1.3, pf: 1, source: "tableau B.2" };
     if (ctxVoie === "resid") return { bitumineux: 0.1, hydraulique: 0.1, sol: 0.1, pf: 0.1, source: "tableau B.4" };

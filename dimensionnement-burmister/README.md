@@ -28,6 +28,7 @@ GNU GPL v3 (fichier `LICENSE` à la racine du dépôt), comme Struct-Urb dont ce
 | `web/app.js`, `web/app.src.html`, `web/build.py` | Interface et assemblage de la page |
 | `web/catalogue_data.js` | Catalogue Struct-Urb (57 structures) |
 | `web/test_annexe_I.js`, `web/annexe_I.json` | Cas tests de l'annexe I rejoués sur le moteur JavaScript |
+| `web/test_methode.js` | Tests des règles de la méthode (relecture croisée Claude / Gemini) |
 | `burmister.py` | Solveur de référence en Python |
 | `valid_annexe_I.py`, `valid_boussinesq.py`, `valid_multicouche.py` | Scripts de validation |
 | `catalogue.py`, `catalogue_*.csv` | Décodeur des fichiers binaires Struct-Urb et catalogue exporté |
@@ -38,6 +39,7 @@ GNU GPL v3 (fichier `LICENSE` à la racine du dépôt), comme Struct-Urb dont ce
 - **Annexe I de la NF P98-086 : 2019** : les 8 cas tests (souple, bitumineux, semi-rigide, rigide ; interfaces collées, semi-collées et glissantes) sont reproduits, 20 valeurs sur 20 dans les tolérances de la norme, par le solveur Python et par le moteur JavaScript.
   - `python3 valid_annexe_I.py`
   - `cd web && node test_annexe_I.js`
+- **Méthode** : 29 tests sur les règles de la norme relevées en relecture croisée (ks, couches collées, classes de trafic, catalogue) : `cd web && node test_methode.js`.
 - **Solution exacte de Boussinesq** : écart relatif de l’ordre de 10⁻¹² (2,3·10⁻¹² au plus) (`valid_boussinesq.py`).
 - **Catalogue Struct-Urb** : en référentiel « CERTU / 1994 », les épaisseurs du catalogue sont retrouvées à 1 cm près pour les structures bitumineuses, semi-rigides et béton.
 

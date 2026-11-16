@@ -25,12 +25,12 @@
     sel.innerHTML = "";
     CAT.filter(s => s.use.includes(v) && matOK(s)).forEach(s => {
       const fam = { 1: "souple", 2: "bitumineuse épaisse", 3: "semi-rigide", 4: "béton", 5: "mixte", 6: "pavés/dalles" }[s.typ] || "";
-      sel.add(new Option(`${s.nom} — ${fam} (NE ${fmt(s.NEmin)} à ${fmt(s.NEmax)})`, s.i));
+      sel.add(new Option(`${s.nom} — ${fam} (NE ${fmt(s.NEmin)} à ${fmt(s.NEmax)})`, s.uid));
     });
     sel.add(new Option("Structure libre (sans référence catalogue)", "libre"));
     if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
   }
-  const structure = () => CAT.find(s => String(s.i) === $("struct").value) || null;
+  const structure = () => CAT.find(s => String(s.uid) === $("struct").value) || null;   // uid : l’index du catalogue CERTU n’est pas unique
 
   // ------------------------------------------------------------ trafic / NE
   function etatTrafic() {
@@ -228,6 +228,9 @@
       if (Mx.cale) notes.push(`${x.mat} : ${Mx.cale}.`);
       if (Mx.saisie) notes.push(`${x.mat} : E = ${fmt(Mx.E)} MPa et σ6 = ${fmt(Mx.sig6, 2)} MPa saisis (pas de valeur de référence dans la norme).`);
     });
+    if (nf() && iGnt >= 0 && fams.slice(0, iGnt).some(m => m.fam === "hydraulique")) notes.push("GNT sous une couche traitée aux liants hydrauliques ou en béton : cas non prévu par le tableau D.1 ; module pris par prudence à min(3 × E dessous ; 360 MPa).");
+    if (nf() && fams.some(m => m.beton && m.beton !== "fond")) notes.push("Béton en couche de base-roulement : Sh = 0,03 m retenu ; le tableau D.13 admet 0,02 ou 0,01 m selon le matériel de mise en œuvre.");
+    if (nf() && couches.some((x, i) => x.h_cm > 0 && x.interface === "collee" && M.MATERIAUX[x.mat].fam === "hydraulique" && !M.MATERIAUX[x.mat].beton && couches[i + 1] && M.MATERIAUX[couches[i + 1].mat].fam === "hydraulique" && !M.MATERIAUX[couches[i + 1].mat].beton)) notes.push("Couches traitées collées entre elles : critère vérifié à la base de l’assise seulement (8.5.2).");
     const kdB = o.res.crit.find(k => k.kd !== undefined && Math.abs(k.kd - 1) > 1e-9);
     if (kdB) notes.push(`kd = 1/${fmt(1 / kdB.kd, 2)} appliqué à ${kdB.mat}${nf() ? " (tableau D.12 ou D.2.4), sous réserve des surlargeurs de l’annexe F" : ""}.`);
     return [...new Set(notes)];
@@ -331,7 +334,7 @@
     certu: "Paramètres de la méthode de 1994 recalés sur le catalogue Struct-Urb (BBSG 5 400 MPa, PF2qs : ks = 1, CAM et risques du logiciel). Sert à retrouver les épaisseurs du catalogue.",
   };
   function appliquerSol() {
-    for (const k of ["SolT", "SolG"]) if (M.MATERIAUX[k]) { M.MATERIAUX[k].E = +$("solE").value || 12000; M.MATERIAUX[k].sig6 = +$("solS6").value || 0.5; }
+    for (const k of ["SolT", "SolS", "SolG"]) if (M.MATERIAUX[k]) { M.MATERIAUX[k].E = +$("solE").value || 12000; M.MATERIAUX[k].sig6 = +$("solS6").value || 0.5; }
   }
   function surVoieOuStructure(rechargeCouches) {
     const v = M.VOIES[voieCat()], s = structure();
@@ -379,6 +382,7 @@
 
   $("ref").value = "nf2019";
   changerReferentiel();
-  if ([...$("struct").options].some(o => o.value === "7")) { $("struct").value = "7"; surVoieOuStructure(true); }
+  const defaut = CAT.find(s => s.i === 7);                    // Enrobés/GB3/GB3
+  if (defaut && [...$("struct").options].some(o => o.value === String(defaut.uid))) { $("struct").value = String(defaut.uid); surVoieOuStructure(true); }
   window.__app = { lancer, couches: () => couches, note, dessiner: dessinerCouches };
 })();
