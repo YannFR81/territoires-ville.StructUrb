@@ -28,6 +28,16 @@ t('GLg collée sur GLg : un seul critère, à la base de l’assise', r.length =
 r = M.verifier([L('BBSG', 6), L('GC3', 20, 'semi'), L('GC3', 20)], ctx('PF2')).crit.filter(k => k.type === 'σt base');
 t('GC3 semi-collée sur GC3 : un critère par couche', r.length === 2);
 
+// 3. GNT sous une couche traitée aux liants hydrauliques ou en béton : cas non prévu par le tableau D.1.
+// Décision de YannFR81 (16/11/2026) : retenir le plus faible des deux jeux de valeurs,
+// k = min(3 ; k de la catégorie) et Emax = min(360 MPa ; Emax de la catégorie) (tableaux D.1 et D.2).
+const Egnt = (struct, pf) => M.modeleMeca(struct, pf).filter(c => c.src === struct.length - 1).map(c => c.E);
+for (const [g, pf, E] of [['GNT', 'PF2', 150], ['GNT2', 'PF2', 125], ['GNT3', 'PF2', 100], ['GNT', 'PF3', 360], ['GNT2', 'PF3', 300], ['GNT3', 'PF3', 200], ['GNT2', 'PF4', 360], ['GNT3', 'PF4', 200]])
+  t(`${g} de 20 cm sous BC5, sur ${pf} : E = ${E} MPa`, pres(Egnt([L('BC5', 22, 'glissante'), L(g, 20)], pf)[0], E));
+t('GNT3 de 20 cm sous GC3, sur PF2 : E = 100 MPa', pres(Egnt([L('BBSG', 6), L('GC3', 22, 'semi'), L('GNT3', 20)], 'PF2')[0], 100));
+t('GNT3 de 20 cm sous assise bitumineuse, sur PF2 : E = 150 MPa (tableau D.1, inchangé)', pres(Egnt([L('BBSG', 6), L('GB3', 14), L('GNT3', 20)], 'PF2')[0], 150));
+t('GNT2 de 20 cm sous assise bitumineuse, sur PF3 : E = 360 MPa (tableau D.1, inchangé)', pres(Egnt([L('BBSG', 6), L('GB3', 14), L('GNT2', 20)], 'PF3')[0], 360));
+
 // 6. tableau B.1 : bornes hautes incluses
 for (const [T, c] of [[25, 'T5'], [26, 'T4'], [150, 'T3+'], [151, 'T2-'], [300, 'T2+'], [5000, 'TS+'], [5001, 'TEX']]) t(`classe de trafic de ${T} PL/j = ${c}`, M.classeTrafic(T) === c);
 
