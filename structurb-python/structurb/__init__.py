@@ -1,5 +1,20 @@
 """Paquet structurb — portage Python de Struct-Urb (CERTU / CEREMA)."""
 
+from .catalogue import (
+    ENTETE_MTS,
+    ENTETE_STR_V200,
+    GRILLES_PF,
+    CatalogueMatSurface,
+    CatalogueStructures,
+    CompositionSurface,
+    LigneEpaisseur,
+    MateriauCompose,
+    MateriauMecanique,
+    MateriauSimple,
+    StructureChaussee,
+    ouvrir_fichier_mat_surface,
+    ouvrir_fichier_structures,
+)
 from .gel import (
     COEF_A_NON_TRAITEE,
     COEF_A_TRAITEE,
@@ -30,13 +45,24 @@ from .trafic import (
 )
 
 __all__ = [
+    "CatalogueMatSurface",
+    "CatalogueStructures",
+    "CompositionSurface",
     "COEF_A_NON_TRAITEE",
     "COEF_A_TRAITEE",
     "COEFFICIENTS_AGGLO",
+    "ENTETE_MTS",
+    "ENTETE_STR_V200",
+    "GRILLES_PF",
     "HIVERS_REFERENCE",
     "HORS_GEL",
+    "LigneEpaisseur",
+    "MateriauCompose",
+    "MateriauMecanique",
+    "MateriauSimple",
     "STATIONS_METEO",
     "StationMeteo",
+    "StructureChaussee",
     "TYPES_VOIE",
     "bornes_trafic_initial",
     "cam_preconise",
@@ -48,6 +74,8 @@ __all__ = [
     "ne_equivalent",
     "ne_hors_limite",
     "obtenir_station",
+    "ouvrir_fichier_mat_surface",
+    "ouvrir_fichier_structures",
     "quantite_gel_non_gelive",
     "quantite_gel_sol_support",
     "statut_trafic_initial",

@@ -16,6 +16,23 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-catalogue
+- Fait :
+  1. Portage complet du **Lot 3 (Catalogue)** dans `structurb-python/structurb/catalogue.py` et export dans `structurb/__init__.py` :
+     - `ouvrir_fichier_mat_surface` (`ModuleMain.bas :: OuvrirFichierMatSurface`, lignes 1846-1985) : lecture binaire `cp1252` de `Certu.mts` (`MateriauSimple`, `MateriauMecanique`, `MateriauCompose` et `CompositionSurface`).
+     - `ouvrir_fichier_structures` (`ModuleMain.bas :: OuvrirFichierStructures`, lignes 362-597) : lecture binaire v2.0.0+ de `Certu.str` (`StructureChaussee` avec les 8 grilles `PF1_Q1..PF3_Q2` de `LigneEpaisseur`, et `MateriauMecanique` pour `MatériauFondBase`).
+     - Rejet explicite des formats v1.00 / v1.03 et des en-têtes invalides.
+  2. Tests dans `structurb-python/tests/test_catalogue.py` (4 fonctions : chargement `Certu.mts` [3 simples, 5 mécaniques, 2 composés], chargement `Certu.str` [69 structures, 14 matériaux base/fondation], cohérence croisée des abréviations surface/base/fondation entre `.str` et `.mts`, et cas d'erreurs).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_catalogue.py` : **4 / 4** tests passés sous Python 3.9 (avec `tempfile.TemporaryDirectory` pour `tmp_path` et shim `pytest.raises`).
+- En suspens :
+  - Contre-relecture et lancement complet `python -m pytest -q` par Claude, puis **Lot 4 (Recherche d'épaisseur : `RechercherEpaisseur`, `TrouverNEthEtInd`)**.
+- À relire par Claude :
+  - `structurb-python/structurb/catalogue.py` (alignement des champs binaires `struct.unpack` avec `ModuleMain.bas` l. 441-548 et 1883-1955, encodage `cp1252`, commentaires multi-morceaux `FIN_COMMENT`).
+  - `structurb-python/tests/test_catalogue.py` et `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Aucune sur ce lot.
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture du commit 7fa25bf (branche gemini/lot-gel)
 - Vérifié :
   - `structurb/gel.py` (`indice_gel_reference`, paramètre `indice_personnel`) : conforme au VB6 (`frmDocument.frm :: CheckIndGelPerso_Click`, `TextIndGelPerso_LostFocus`), court-circuite bien la station et le coefficient d'agglomération, et rejette booléens / flottants / valeurs négatives.
