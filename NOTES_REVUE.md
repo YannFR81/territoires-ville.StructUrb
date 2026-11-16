@@ -16,6 +16,87 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture des correctifs du lot Catalogue (99c3d12, branche gemini/lot-catalogue)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **94 / 94**.
+  - Point 1 corrigé : `structures_par_abrege` donne le tuple de toutes les variantes (49 abrégés, 69 structures) ;
+    `structures` garde l’ordre du fichier, comme la collection VB6.
+  - Point 2 : doublons de clé refusés sans tenir compte de la casse (une seule table pour les trois types de `.mts`,
+    comme `maColMatSurf`), recherche insensible à la casse par `obtenir` et `obtenir_materiau_bf`. Conforme.
+  - Points 3 à 5 : espaces conservés et documentés, `Optional` importé, tests renforcés (valeur de référence `ES/GNT`,
+    comparaison complète aux deux CSV, doublons `BB`/`bb` et `GNT`/`gnt` refusés sur fichiers construits).
+- Remarques (non bloquantes) :
+  1. La comparaison CSV des matériaux ne contrôle pas ε6 ni σ6 (seulement Agel, Bgel, E, ν) ; mon contrôle précédent
+     les avait trouvés identiques.
+  2. Les tests dépendent du dossier `dimensionnement-burmister/` : à garder en tête si ce dossier est déplacé.
+- Verdict : **BON POUR FUSION** de la part de Claude.
+- Question pour YannFR81 : fusion de `gemini/lot-catalogue` dans `main` ; ensuite, lot 4 (recherche d’épaisseur).
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-catalogue (correctifs relecture Claude)
+- Fait :
+  1. `CatalogueStructures.structures_par_abrege` (`structurb/catalogue.py`) : remplacé par `Dict[str, Tuple[StructureChaussee, ...]]` (plus aucune perte des 20 variantes partageant le même abrégé ; les 69 structures restent toutes accessibles sans perte).
+  2. Clés de matériaux (`par_abrege` et `materiaux_par_abrege`) : rejet explicite des doublons insensibles à la casse via `_enregistrer_materiau_unique` (`ValueError`), et ajout des méthodes `CatalogueMatSurface.obtenir` et `CatalogueStructures.obtenir_materiau_bf` (recherche insensible à la casse).
+  3. Espaces significatifs : conservés sans `strip()` sur tous les abrégés (documenté dans les docstrings, distinguant notamment `"Enrobés"` et `" Enrobés "`).
+  4. `Optional` importé dans `structurb/catalogue.py` (`typing.get_type_hints` validé).
+  5. `tests/test_catalogue.py` : ajout du cas de référence `ES/GNT` (`0/15/18/0/0`), des tests sur les 69 variantes / 49 abrégés, sur les espaces significatifs, sur le rejet de doublons insensibles à la casse, et de la comparaison exhaustive avec `dimensionnement-burmister/catalogue_structures.csv` (**7 544 lignes**) et `catalogue_materiaux.csv` (**24 matériaux**).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_catalogue.py` : **7 / 7** tests passés sous Python 3.9 (via shim `pytest` + `tempfile.TemporaryDirectory`, `pytest` n'étant pas installé dans `python3.9`).
+- En suspens :
+  - Contre-relecture finale et exécution de `python -m pytest -q` par Claude, puis fusion dans `main` et passage au **Lot 4 (Recherche d'épaisseur)**.
+- À relire par Claude :
+  - `structurb-python/structurb/catalogue.py` et `structurb-python/tests/test_catalogue.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
+## 2026-11-17 — Claude — relecture du lot Catalogue (6e83e4a, branche gemini/lot-catalogue)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **91 / 91**.
+  - Lecture binaire comparée champ par champ à `OuvrirFichierStructures` et `OuvrirFichierMatSurface` : ordre et tailles
+    conformes (`Integer` et `Boolean` sur 2 octets, `Byte` 1, `Long` 4, `Single` 4, chaînes `Long` + octets cp1252,
+    commentaires concaténés jusqu’à `FIN_COMMENT`, `unNbTot \ 8` lignes par grille, 8 grilles dans l’ordre de `DonnerColPF`).
+  - Contrôle indépendant : comparaison avec l’extraction faite par un autre décodeur (`dimensionnement-burmister/catalogue.py`,
+    `catalogue_structures.csv`) : **7 544 lignes d’épaisseur identiques** (abrégé, grille, 5 épaisseurs, Qm, min. technique,
+    max. pratique) ; **24 matériaux identiques** (Agel, Bgel, E, ν, ε6, σ6, y compris les 2 matériaux composés).
+- **À corriger (bloquant pour le lot 4)** :
+  1. `structures_par_abrege` perd des structures : 69 structures mais **49 abrégés distincts** (ex. `Enrobés/GNT` existe
+     deux fois, index 9 pour 1 000 à 100 000 essieux et index 37 pour 10 000 à 20 000). Le dictionnaire garde la dernière,
+     sans prévenir : 20 structures inaccessibles par cette voie. En VB6, `uneColStruct.Add uneStruct` n’a **pas de clé**.
+     De plus, `num_index` n’est pas unique non plus (**69** pour `Enrobés/GLg-T2` et pour `Dalles/BC5`).
+     Proposition : supprimer `structures_par_abrege`, ou le remplacer par `Dict[str, Tuple[StructureChaussee, ...]]` ;
+     identifier une structure par sa position dans `structures` (comme la collection VB6), à confirmer au lot 4
+     avec `DonnerStructChoisie`.
+- À corriger (non bloquant) :
+  2. Clés des collections VB6 : la recherche par clé est **insensible à la casse** et un doublon de clé fait échouer
+     le chargement (erreur 457). Les dictionnaires Python (`par_abrege`, `materiaux_par_abrege`) sont sensibles à la casse
+     et écrasent les doublons sans rien dire. Aucun cas dans les fichiers Certu, mais un fichier personnel peut en contenir :
+     lever une erreur sur doublon (comparaison sans casse) et chercher sans casse.
+  3. Les abrégés contiennent des espaces significatifs : `Enrobés` et ` Enrobés ` sont deux matériaux composés distincts
+     (le second pour les giratoires). Ne jamais appliquer `strip()` aux abrégés (à écrire dans la docstring).
+  4. Tests trop faibles : seulement des comptages et des signes. Ajouter des valeurs de référence (par ex. `ES/GNT`, PF1 Q1,
+     1re ligne : 0 / 15 / 18 / 0 / 0) et un test qui compare toute la lecture à `dimensionnement-burmister/catalogue_structures.csv`
+     et `catalogue_materiaux.csv` (le contrôle ci-dessus, 7 544 lignes et 24 matériaux), plus un test sur les abrégés en double.
+  5. `Optional` est utilisé dans une annotation sans être importé (sans effet grâce à `from __future__ import annotations`,
+     mais `typing.get_type_hints` échouerait).
+- Verdict : **À CORRIGER** (point 1). La lecture binaire elle-même est exacte.
+- Question pour YannFR81 : aucune.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-catalogue
+- Fait :
+  1. Portage complet du **Lot 3 (Catalogue)** dans `structurb-python/structurb/catalogue.py` et export dans `structurb/__init__.py` :
+     - `ouvrir_fichier_mat_surface` (`ModuleMain.bas :: OuvrirFichierMatSurface`, lignes 1846-1985) : lecture binaire `cp1252` de `Certu.mts` (`MateriauSimple`, `MateriauMecanique`, `MateriauCompose` et `CompositionSurface`).
+     - `ouvrir_fichier_structures` (`ModuleMain.bas :: OuvrirFichierStructures`, lignes 362-597) : lecture binaire v2.0.0+ de `Certu.str` (`StructureChaussee` avec les 8 grilles `PF1_Q1..PF3_Q2` de `LigneEpaisseur`, et `MateriauMecanique` pour `MatériauFondBase`).
+     - Rejet explicite des formats v1.00 / v1.03 et des en-têtes invalides.
+  2. Tests dans `structurb-python/tests/test_catalogue.py` (4 fonctions : chargement `Certu.mts` [3 simples, 5 mécaniques, 2 composés], chargement `Certu.str` [69 structures, 14 matériaux base/fondation], cohérence croisée des abréviations surface/base/fondation entre `.str` et `.mts`, et cas d'erreurs).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_catalogue.py` : **4 / 4** tests passés sous Python 3.9 (avec `tempfile.TemporaryDirectory` pour `tmp_path` et shim `pytest.raises`).
+- En suspens :
+  - Contre-relecture et lancement complet `python -m pytest -q` par Claude, puis **Lot 4 (Recherche d'épaisseur : `RechercherEpaisseur`, `TrouverNEthEtInd`)**.
+- À relire par Claude :
+  - `structurb-python/structurb/catalogue.py` (alignement des champs binaires `struct.unpack` avec `ModuleMain.bas` l. 441-548 et 1883-1955, encodage `cp1252`, commentaires multi-morceaux `FIN_COMMENT`).
+  - `structurb-python/tests/test_catalogue.py` et `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Aucune sur ce lot.
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture du commit 7fa25bf (branche gemini/lot-gel)
 - Vérifié :
   - `structurb/gel.py` (`indice_gel_reference`, paramètre `indice_personnel`) : conforme au VB6 (`frmDocument.frm :: CheckIndGelPerso_Click`, `TextIndGelPerso_LostFocus`), court-circuite bien la station et le coefficient d'agglomération, et rejette booléens / flottants / valeurs négatives.
