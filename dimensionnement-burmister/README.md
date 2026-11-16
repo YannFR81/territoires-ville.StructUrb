@@ -38,7 +38,7 @@ GNU GPL v3 (fichier `LICENSE` à la racine du dépôt), comme Struct-Urb dont ce
 - **Annexe I de la NF P98-086 : 2019** : les 8 cas tests (souple, bitumineux, semi-rigide, rigide ; interfaces collées, semi-collées et glissantes) sont reproduits, 20 valeurs sur 20 dans les tolérances de la norme, par le solveur Python et par le moteur JavaScript.
   - `python3 valid_annexe_I.py`
   - `cd web && node test_annexe_I.js`
-- **Solution exacte de Boussinesq** : écart inférieur à 10⁻¹² (`valid_boussinesq.py`).
+- **Solution exacte de Boussinesq** : écart relatif de l’ordre de 10⁻¹² (2,3·10⁻¹² au plus) (`valid_boussinesq.py`).
 - **Catalogue Struct-Urb** : en référentiel « CERTU / 1994 », les épaisseurs du catalogue sont retrouvées à 1 cm près pour les structures bitumineuses, semi-rigides et béton.
 
 ## Référentiels de la page
