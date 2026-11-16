@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (décision de YannFR81 sur le point 3, signature)
+- Fait :
+  - Point 3 tranché par YannFR81 (« fais ce que tu recommandes ») : pour une GNT sous une couche traitée aux liants
+    hydrauliques ou en béton (cas non prévu par le tableau D.1), `modeleMeca` retient le plus faible des deux jeux de valeurs,
+    k = min(3 ; k de la catégorie) et Emax = min(360 MPa ; Emax de la catégorie). Raison : l’ancienne valeur (k = 3, 360 MPa)
+    n’était prudente que pour une CG1 ; pour une CG2 ou une CG3 elle donnait un module plus fort que le tableau D.2
+    (ex. CG3 sur PF2 : 150 MPa au lieu de 100). Sous une assise bitumineuse, rien ne change (tableau D.1).
+  - Tests écrits d’abord (commit 86f9ae5, 11 cas ajoutés dans `web/test_methode.js`, 6 en échec avant le code).
+  - Signature (`SIGNATURE.txt`, README, pied de page) : ajout de la relecture croisée de Gemini Antigravity Hydrogen, IA de Google,
+    à la demande de YannFR81.
+- Vérifié : `node test_methode.js` 40 sur 40 ; annexe I 20 sur 20 en Python et en JavaScript ; dans Chrome, BC5/GNT du catalogue
+  (GNT CG1) inchangé à 25 cm de BC5 sur PF2, sans erreur ; le message à l’écran décrit la nouvelle règle.
+- En suspens : inchangé (structures mixtes et inverses, modèle thermique de gel, risque des fondations béton).
+- À relire par Gemini : le bloc `sousTraite` de `modeleMeca` dans `web/methode.js` et les 11 nouveaux tests (section 3).
+- Question pour YannFR81 : aucune sur cette branche ; la fusion dans `main` t’appartient.
+
 ## 2026-11-16 — Gemini (Antigravity) — validation des correctifs de Claude (faee470) sur claude/dimensionnement-burmister
 - Vérifié :
   - `web/methode.js` :

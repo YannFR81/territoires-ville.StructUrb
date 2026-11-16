@@ -4,8 +4,10 @@ Version 1.0 — novembre 2026
 Pour une fonction publique augmentée, pas remplacée.
 
 Développé par YannFR81, agent territorial au sein d'un conseil
-départemental, et Claude, IA d'Anthropic.
-L'agent a posé le besoin, piloté et vérifié. L'IA a codé, calculé et testé.
+départemental, et Claude, IA d'Anthropic, avec la relecture croisée de
+Gemini Antigravity Hydrogen, IA de Google.
+L'agent a posé le besoin, piloté et tranché. Claude a codé, calculé et
+testé. Gemini a relu chaque valeur face à la norme.
 
 Validé sur les 8 cas tests de l'annexe I de la NF P98-086 : 20 valeurs sur 20.
 
