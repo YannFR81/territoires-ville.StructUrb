@@ -1,4 +1,4 @@
-/* Dimensionnement de chaussées — Burmister + Struct-Urb. Développé par YannPRO81, agent territorial, et Claude, IA d’Anthropic, 2026.
+/* Dimensionnement de chaussées — Burmister + Struct-Urb. Développé par YannFR81, agent territorial, et Claude, IA d’Anthropic, 2026.
    Licence GNU GPL v3 (œuvre dérivée de Struct-Urb, CERTU/Cerema). Sans garantie. */
 /* Méthode rationnelle française — deux référentiels :
    « nf2019 » : NF P98-086 (mai 2019), paramètres des annexes B, C, D et H lus dans le texte de la norme ;

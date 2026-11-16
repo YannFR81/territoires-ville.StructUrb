@@ -3,7 +3,7 @@ Version 1.0 — novembre 2026
 
 Pour une fonction publique augmentée, pas remplacée.
 
-Développé par YannPRO81, agent territorial au sein d'un conseil
+Développé par YannFR81, agent territorial au sein d'un conseil
 départemental, et Claude, IA d'Anthropic.
 L'agent a posé le besoin, piloté et vérifié. L'IA a codé, calculé et testé.
 

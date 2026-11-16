@@ -8,7 +8,7 @@ Version 1.0 — 16 novembre 2026.
 
 **Pour une fonction publique augmentée, pas remplacée.**
 
-Développé par YannPRO81, agent territorial au sein d'un conseil départemental, et Claude, IA d'Anthropic, du 12 au 16 novembre 2026. L'agent a posé le besoin, piloté et vérifié. L'IA a codé, calculé et testé.
+Développé par YannFR81, agent territorial au sein d'un conseil départemental, et Claude, IA d'Anthropic, du 12 au 16 novembre 2026. L'agent a posé le besoin, piloté et vérifié. L'IA a codé, calculé et testé.
 
 Données et méthode d'origine : logiciel Struct-Urb du CERTU, publié par le Cerema sous licence GPL v3 (https://github.com/CEREMA/territoires-ville.StructUrb).
 

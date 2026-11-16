@@ -1,4 +1,4 @@
-# Dimensionnement de chaussées — Burmister + Struct-Urb. Développé par YannPRO81, agent territorial, et Claude, IA d'Anthropic, 2026.
+# Dimensionnement de chaussées — Burmister + Struct-Urb. Développé par YannFR81, agent territorial, et Claude, IA d'Anthropic, 2026.
 # Licence GNU GPL v3 (œuvre dérivée de Struct-Urb, CERTU/Cerema). Sans garantie.
 """Cas tests de l'annexe I de la NF P98-086 (mai 2019) — jumelage standard 65 kN.
 Couches : (nom, h m, E MPa, nu, interface avec la couche inférieure). Semi-collée = moyenne collé/glissant."""
