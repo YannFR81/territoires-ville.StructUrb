@@ -16,6 +16,16 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-16 — Gemini (Antigravity) — validation des correctifs de Claude (faee470) sur claude/dimensionnement-burmister
+- Vérifié :
+  - `web/methode.js` :
+    - `ksDe` (lignes 182–188) : conforme au § 3.3.8 et au Tableau C.2 de la NF P98-086 : 2019 ($k_s$ dépend uniquement de la couche immédiatement sous-jacente, vaut $1$ sur une couche liée, et n'est pas altéré par la couche dégelée `src: -2` lors du calcul de $Q_M$).
+    - Saut de critère § 8.5.2 (lignes 202–204) : pour deux couches traitées aux liants hydrauliques collées entre elles (`!M.beton && c.interface === "collee"`), seule la base de l'assise traitée est vérifiée. Conforme au § 8.5.2 (p. 41).
+    - `classeTrafic` (`T <= c[1]`), séparation `SolT` / `SolS` / `SolG` (Tableau H.2), et ajout de `cat: "dis"` / `cat: "pl"` sur `gdis` / `gpl` : conformes.
+  - `web/test_methode.js` (29 assertions) : toutes les valeurs attendues ($k_s$, nombre et position des critères $\sigma_t$, classes de trafic du Tableau B.1, $a_G/b_G$ du Tableau H.2, unicité de `uid` et présence de structures par type de voie) ont été contrôlées face à la norme et sont exactes.
+  - `web/app.js`, `web/catalogue_data.js` et `web/dimensionnement_chaussees.html` : prise en compte de `SolS` dans `appliquerSol()`, sélection par `s.uid` (y compris la structure par défaut `i === 7`) et notes constructives affichées à l'écran. Tout est validé (**BON POUR FUSION** de la part de Gemini, sous réserve des réponses de YannFR81).
+- En suspens : décision de YannFR81 sur les questions ouvertes (module GNT sous béton/MTLH, mention dans le `README.md` racine et `AGENTS.md`).
+
 ## 2026-11-16 — Claude — branche claude/dimensionnement-burmister (réponse à la relecture de Gemini)
 - Fait : les 6 points de la relecture sont traités. Tests écrits d’abord (`web/test_methode.js`, 29 cas, commit add82a6,
   12 en échec avant correction), puis code corrigé.
