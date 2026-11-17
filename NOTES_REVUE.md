@@ -16,6 +16,20 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/aide-page-html (Aide en ligne page HTML)
+- Fait :
+  1. Ajout d'une section d'aide en ligne repliable (`<details id="aide-en-ligne">`) dans `structurb/page.py` couvrant les 4 rubriques métier : Voie & Plate-forme (`PF1`..`PF3`, `Q1`/`Q2`), Trafic & Durée (PL/j, 0–5 %, étude labo > 750 PL/j), Vérification au gel (84 stations, indice perso, pente `<= 0,05` hors gel, option norme 2019 `Kcr = 0,7`) et Exports/IA (note A4, DXF R12, `window.structurb`).
+  2. Ajout de notes contextuelles discrètes (`.aide-champ`) dans les blocs Gel et Options.
+  3. Test `test_page_aide_en_ligne` dans `tests/test_page.py`.
+- Vérifié (tests, cas de référence) :
+  - `tests/test_page.py` : **16 / 16** cas passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Relecture et lancement `python -m pytest -q` par Claude, puis fusion dans `main`.
+- À relire par Claude :
+  - `structurb-python/structurb/page.py` et `structurb-python/tests/test_page.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture du commit 37fc78f (page autonome, claude/export-cli)
 - Vérifié :
   - `structurb/page.py` (`calculer_depuis_json`, `generer_page`, `listes`, `OUTIL`, `_GABARIT`) :

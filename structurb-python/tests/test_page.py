@@ -140,3 +140,9 @@ def test_commande_page(tmp_path, capsys):
     f = tmp_path / "p.html"
     assert main(["page", "--sortie", str(f)]) == 0
     assert f.stat().st_size > 300_000  # moteur + catalogue embarqués
+
+
+def test_page_aide_en_ligne(page):
+    assert 'id="aide-en-ligne"' in page
+    for mot in ("PF1", "PF2+", "Q1", "Q2", "Kcr", "DXF", "window.structurb"):
+        assert mot in page, mot

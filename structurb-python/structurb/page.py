@@ -337,6 +337,13 @@ button:disabled { opacity: .5; cursor: wait; }
 #resultat-erreur { color: var(--ko); font-weight: 600; }
 iframe { width: 100%; height: 900px; border: 1px solid var(--bord); border-radius: 8px; background: #fff; margin-top: 12px; }
 details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflow: auto; }
+details.aide { margin: 12px 0 18px; border: 1px solid var(--bord); border-radius: 8px; background: var(--zone); padding: 10px 14px; }
+details.aide summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.aide-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 10px; font-size: 13px; }
+.aide-grille h3 { font-size: 14px; margin: 0 0 6px; border-bottom: 1px solid var(--bord); padding-bottom: 3px; }
+.aide-grille ul { margin: 0; padding-left: 18px; }
+.aide-grille li { margin-bottom: 4px; }
+.aide-champ { grid-column: 1 / -1; font-size: 12px; color: var(--doux); margin: 4px 0 0; }
 </style>
 </head>
 <body>
@@ -344,6 +351,44 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
 <h1>Struct-Urb Python</h1>
 <p class="doux">Dimensionnement des structures de chaussées urbaines par le catalogue CERTU. Le calcul s’exécute dans ce navigateur ; aucune donnée n’est envoyée.</p>
 <p id="etat" role="status">Chargement du moteur de calcul (Pyodide, environ 10 Mo la première fois)…</p>
+
+<details id="aide-en-ligne" class="aide">
+  <summary>Aide en ligne &amp; documentation rapide</summary>
+  <div class="aide-grille">
+    <div>
+      <h3>1. Voie &amp; Plate-forme</h3>
+      <ul>
+        <li><strong>Type de voie</strong> : filtre les structures autorisées par le catalogue CERTU et détermine le CAM préconisé.</li>
+        <li><strong>Plate-forme</strong> : portance à long terme — <code>PF1</code> (20–50 MPa), <code>PF2</code> (50–80 MPa), <code>PF2+</code> (80–120 MPa), <code>PF3</code> (&gt; 120 MPa).</li>
+        <li><strong>Q1 / Q2</strong> : qualité de réalisation courante (<code>Q1</code>) ou chantier difficile (<code>Q2</code>).</li>
+      </ul>
+    </div>
+    <div>
+      <h3>2. Trafic &amp; Durée</h3>
+      <ul>
+        <li><strong>Trafic initial</strong> : nombre moyen de poids lourds par jour, par sens et par voie la plus chargée (PL/j).</li>
+        <li><strong>Croissance</strong> : taux annuel linéaire entre <code>0 %</code> et <code>5 %</code> (calculé sur 5 à 50 ans en usage courant).</li>
+        <li><strong>Étude labo</strong> : conseillée en voie à trafic lourd lorsque le trafic initial dépasse <code>750 PL/j</code>.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>3. Vérification au gel</h3>
+      <ul>
+        <li><strong>Station ou indice perso</strong> : choisissez une des 84 stations (facteur agglo : <code>1,0</code> / <code>0,9</code> / <code>0,8</code>) ou saisissez un indice local Météo-France (notamment en altitude).</li>
+        <li><strong>Pente de gonflement</strong> : sol non gélif si <code>&lt;= 0,05</code> (chaussée hors gel).</li>
+        <li><strong>Norme 2019</strong> : applique <code>Kcr = 0,7</code> (NF P 98-086 § 6.2.4, méthode simplifiée) et les coefficients GCV du tableau H.2 au lieu de <code>0,6</code> (VB6).</li>
+      </ul>
+    </div>
+    <div>
+      <h3>4. Exports &amp; Pilotage IA</h3>
+      <ul>
+        <li><strong>Note HTML</strong> : page autonome imprimable en A4 (<code>Ctrl+P</code>) avec coupes SVG et données JSON.</li>
+        <li><strong>Coupe DXF</strong> : dessin R12 prêt pour AutoCAD / COVADIS (calques séparés par couche, unité m/cm/mm).</li>
+        <li><strong>Interface IA</strong> : API JavaScript <code>window.structurb.calculer(params)</code> et outil WebMCP <code>dimensionner_chaussee</code>.</li>
+      </ul>
+    </div>
+  </div>
+</details>
 
 <form id="formulaire-etude" novalidate>
   <fieldset>
@@ -371,6 +416,7 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
     <div class="champ"><label for="champ-pente_sol_pourcent">Pente de l’essai de gonflement</label><input id="champ-pente_sol_pourcent" name="pente_sol_pourcent" type="number" min="0" step="0.01" placeholder="ex. 0,5"></div>
     <div class="champ"><label for="champ-epaisseur_non_gelive_cm">Couche de forme non gélive (cm)</label><input id="champ-epaisseur_non_gelive_cm" name="epaisseur_non_gelive_cm" type="number" min="0" step="1" value="0"></div>
     <div class="champ case"><input id="champ-couche_forme_traitee" name="couche_forme_traitee" type="checkbox"><label for="champ-couche_forme_traitee">Couche de forme traitée</label></div>
+    <p class="aide-champ">Laissez la station vide pour ne pas vérifier au gel. En secteur d’altitude, préférez l’indice personnel.</p>
   </fieldset>
   <fieldset>
     <legend>Options</legend>
@@ -378,6 +424,7 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
     <div class="champ case"><input id="champ-fidele_vb6" name="fidele_vb6" type="checkbox" checked><label for="champ-fidele_vb6">Gel : épaisseurs comme le VB6 (lit de pose compris)</label></div>
     <div class="champ"><label for="champ-unite_dxf">Unité du DXF</label><select id="champ-unite_dxf" name="unite_dxf"><option value="m">mètre</option><option value="cm">centimètre</option><option value="mm">millimètre</option></select></div>
     <div class="champ"><label for="champ-variante">Variante</label><input id="champ-variante" name="variante" type="text"></div>
+    <p class="aide-champ">Par défaut, le calcul reproduit exactement Struct-Urb VB6 (Kcr = 0,6 et lit de pose inclus).</p>
   </fieldset>
   <div class="actions">
     <button id="bouton-calculer" type="submit" disabled>Calculer</button>
