@@ -203,7 +203,14 @@ def dimensionner_etude(
     fidele_vb6: bool = True,
     norme_2019: bool = False,
 ) -> ResultatEtude:
-    """Exécute un dimensionnement complet (Trafic -> NE -> Épaisseurs -> Surface -> Gel)."""
+    """Exécute un dimensionnement complet (Trafic -> NE -> Épaisseurs -> Surface -> Gel).
+
+    Réf. VB6 : ``frmDocument.frm`` (l. 2985-2989 : PF1 interdite en giratoire).
+    """
+    if type_voie in ("giratoire_distribution", "giratoire_trafic_lourd") and plate_forme == "PF1":
+        raise ValueError(
+            "La plate-forme PF1 n’est pas admise pour un giratoire (choisir PF2, PF2+ ou PF3)."
+        )
     t_cum = trafic_cumule(trafic_initial_pl, croissance_pct, duree_ans)
     famille = TYPES_STRUCTURE.get(structure.type_structure, "")
     cam_val = (

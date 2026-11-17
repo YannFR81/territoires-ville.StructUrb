@@ -59,3 +59,36 @@ def test_giratoire_q2_sans_objet_etude_et_json(catalogues):
     assert "Q2 : sans objet (giratoire)" in r["resume"]
     assert "Q2 : sans objet (giratoire)" in r["html"]
     assert "Q2 : sans objet (giratoire)" in r["dxf"]
+
+
+# --- 2. PF1 non admise en giratoire ------------------------------------------
+
+@pytest.mark.parametrize("voie, idx", [
+    ("giratoire_distribution", 16),
+    ("giratoire_trafic_lourd", 16),
+])
+def test_pf1_refusee_en_giratoire(catalogues, voie, idx):
+    cat_str, cat_mts = catalogues
+    with pytest.raises(ValueError, match="PF1"):
+        dimensionner_etude(
+            cat_str, cat_mts, cat_str.structures[idx],
+            type_voie=voie,
+            trafic_initial_pl=150,
+            croissance_pct=1,
+            duree_ans=20,
+            plate_forme="PF1",
+        )
+
+
+def test_pf1_refusee_en_giratoire_api_page():
+    r = json.loads(calculer_depuis_json(json.dumps({
+        "index": 16,
+        "type_voie": "giratoire_distribution",
+        "trafic_initial_pl": 80,
+        "croissance_pct": 1,
+        "duree_ans": 20,
+        "plate_forme": "PF1",
+    }), dossier_catalogue=REPO_ROOT))
+    assert r["ok"] is False
+    assert "PF1" in r["erreur"]
+    assert "giratoire" in r["erreur"].lower()

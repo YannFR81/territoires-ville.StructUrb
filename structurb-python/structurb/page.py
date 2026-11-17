@@ -755,6 +755,12 @@ __DOCUMENTATION__
       selStruct.add(new Option(`${s.abrege.trim()} — ${s.famille}, NE ${nb(s.ne_min)} à ${nb(s.ne_max)}`, String(s.index)));
     }
     if ([...selStruct.options].some((o) => o.value === avant)) selStruct.value = avant;
+    const selPF = $("champ-plate_forme"), optPF1 = selPF.querySelector("option[value='PF1']") || selPF.options[0];
+    const gir = selVoie.value.startsWith("giratoire_");
+    if (optPF1) {
+      optPF1.disabled = gir;
+      if (gir && selPF.value === "PF1") selPF.value = "PF2";
+    }
   }
   selVoie.addEventListener("change", remplirStructures);
   remplirStructures();
