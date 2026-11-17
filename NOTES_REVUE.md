@@ -16,6 +16,71 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture du commit 37fc78f (page autonome, claude/export-cli)
+- Vérifié :
+  - `structurb/page.py` (`calculer_depuis_json`, `generer_page`, `listes`, `OUTIL`, `_GABARIT`) :
+    - `calculer_depuis_json` : validation stricte des entrées JSON (`_entier`, `_reel`, `_choix`, `_booleen`), rejet propre des booléens pris pour des entiers, filtrage de la structure sur le type de voie, messages d'erreur en français ;
+    - `generer_page` : embarque toutes les sources `structurb/*.py` et `Certu.str`/`Certu.mts` (base64), substitution en une seule passe (`re.sub`), Pyodide figé (`0.26.4`), JSON protégé par `_json_script` (`<` -> `\u003c`), formulaire accessible + `window.structurb` + outil `dimensionner_chaussee` (JSON Schema + WebMCP).
+  - `structurb/cli.py` (sous-commande `page --sortie`) & `README.md` : clairs et complets.
+  - `tests/test_page.py` : **15 / 15** cas passés sous `python3.9` (via shim `pytest`).
+  - Essai CLI : `python3.9 -m structurb page --sortie .../scratch/structurb_page.html` génère bien la page autonome sans erreur.
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+
+## 2026-11-17 — Claude — page autonome pilotable par les IA du navigateur (branche claude/export-cli)
+Décision de YannFR81 : « Page autonome » (plutôt qu’un serveur local Python).
+- Fait (tests écrits avant le code) :
+  - `structurb/page.py` :
+    - `calculer_depuis_json(params_json)` : point d’entrée de la page, paramètres JSON → résultat JSON
+      (`donnees`, `resume`, note `html`, coupe `dxf`) ou `{"ok": false, "erreur": …}` en français ; contrôle des saisies
+      (types, bornes, voie, plate-forme, station, structure prévue pour la voie) ;
+    - `generer_page(chemin)` : un seul fichier HTML (~560 Ko) avec les sources du paquet et les catalogues embarqués,
+      Pyodide **0.26.4** chargé depuis jsDelivr (seule ressource externe) ; remplacement du gabarit en une seule passe ;
+    - formulaire balisé (`label for`, `name`, `id` stables, `aria-live`), listes de choix préremplies sans attendre Pyodide,
+      `window.structurb.{calculer, structures, stations, pret, outil}`, outil `dimensionner_chaussee` en JSON Schema,
+      déclaration WebMCP (`navigator.modelContext`) si disponible, téléchargement de la note et du DXF.
+  - `python -m structurb page --sortie fichier.html` ; `rapport.donnees_note` réutilisable (dictionnaire).
+- Vérifié :
+  - `python -m pytest -q` : **167 / 167** (15 nouveaux tests).
+  - Essai réel dans le navigateur intégré (page servie en local) : Pyodide chargé, formulaire rempli champ par champ
+    comme le ferait un agent, résultat identique à la ligne de commande (Pavés/GNT : NE 20 849, 8 + 4 + 15 cm, gel 36 / 54) ;
+    `window.structurb.calculer` sur Dalles/BC5 avec l’option norme 2019 ; erreur de saisie lisible ; aucune erreur console.
+  - WebMCP non proposé par ce navigateur : non testé en conditions réelles (code protégé par des tests de présence).
+- Limites : Internet nécessaire au premier chargement de Pyodide ; ouverture directe en `file://` non testée ici.
+- À relire par Gemini : `page.py`, `tests/test_page.py`, le gabarit HTML/JS, README.
+
+## 2026-11-17 — Gemini (Antigravity) — relecture de claude/export-cli (33671bf)
+- Vérifié :
+  - `structurb/rapport.py` (`note_calcul_html`, `_svg_coupe`, `_donnees_machine`) : page HTML5 autonome imprimable A4 (`@page`, `@media print`), SVG proportionnels avec épaisseurs catalogue (lit de pose inclus, sans les 3 cm d'affichage), échappement HTML (`escape`) et JSON sécurisé (`replace("<", r"\u003c")` dans `<script id="structurb-donnees">`).
+  - `structurb/dxf.py` (`coupe_dxf`, `ecrire_coupe_dxf`) : DXF R12 (`AC1009`, `ANSI_1252`, `cp1252`, `CRLF`), 7 calques ACI, sommets `SOLID` en ordre `1-2-4-3` + `POLYLINE` fermée, textes compatibles `txt.shx` (pas de tiret long ni point médian), unités `m` / `cm` / `mm`.
+  - `structurb/cli.py` & `__main__.py` : `python -m structurb structures | stations | etude`, choix `--structure` (avec filtrage par voie et détection de variantes) ou `--index`, gestion propre des erreurs (`ErreurSaisie` -> code 2). Testé en direct avec `python3.9 -m structurb stations`.
+  - `tests/test_cli.py`, `tests/test_dxf.py`, `tests/test_rapport.py` : **17 / 17** cas sans `ezdxf` passés sous `python3.9` (via shim `pytest`, les tests `ezdxf` restant sautés sans `ezdxf` comme prévu).
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+
+## 2026-11-17 — Claude — export HTML, ligne de commande et coupe DXF (branche claude/export-cli)
+Demandes de YannFR81 : export HTML imprimable + ligne de commande ; coupe de chaussée annotée en DXF ;
+page HTML pilotable par les assistants IA des navigateurs.
+- Fait (tests écrits avant le code) :
+  - `structurb/rapport.py` : `note_calcul_html(resultat, structure, **paramètres)` : page HTML autonome (aucune ressource
+    externe), imprimable en A4 (`@page`, `@media print`), coupes Q1 / Q2 en SVG avec les épaisseurs du catalogue
+    (lit de pose dessiné, pas les 3 cm d’affichage), sections repérées (`#resultats-trafic`, `#resultats-epaisseurs`,
+    `#resultats-gel`) et bloc JSON `structurb-donnees` (format `structurb-note/1`, `<` échappé en `<`).
+  - `structurb/dxf.py` : `coupe_dxf` / `ecrire_coupe_dxf` : DXF R12 (AC1009) sans dépendance, cp1252 et CRLF,
+    un calque par rôle (`STRUCTURB_SURFACE`, `_LIT_POSE`, `_BASE`, `_FONDATION`, `_PLATEFORME`, `_TEXTE`, `_CADRE`),
+    contour + remplissage `SOLID` par couche, annotations, cote d’épaisseur totale, symbole de plate-forme ;
+    unité `m` (défaut), `cm` ou `mm`. Pas de tiret long ni de point médian (absents de txt.shx).
+  - `structurb/cli.py` + `__main__.py` : `python -m structurb structures | stations | etude` ; `etude` accepte
+    `--structure` (abrégé, variantes départagées par le type de voie) ou `--index`, toutes les options du gel,
+    `--html`, `--dxf`, `--unite`.
+  - Exports dans `__init__.py` ; section « Ligne de commande » dans le README.
+- Vérifié :
+  - `python -m pytest -q` : **152 / 152** (20 nouveaux tests). Test de relecture par ezdxf : passé en local,
+    sauté dans la CI (ezdxf non installé) ; audit ezdxf : 0 erreur.
+  - Rendu du DXF contrôlé à l’image (Pavés/GNT, Dalles/BC5) ; note HTML contrôlée dans le navigateur.
+  - Catalogue Certu : aucune abréviation ambiguë une fois filtrée par type de voie.
+- En suspens : pilotage **interactif** par les IA du navigateur (formulaire de saisie qui lance le calcul) : choix
+  d’architecture à faire par YannFR81 (serveur local Python ou page autonome).
+- À relire par Gemini : `rapport.py`, `dxf.py`, `cli.py`, les trois fichiers de tests, le README.
+
 ## 2026-11-17 — Claude — fusion dans main de gemini/lot-norme-2019, gemini/lot-urb et claude/ci
 - Fait : trois fusions `--no-ff` dans `main`, dans cet ordre (décision de YannFR81). Conflits limités à ce fichier,
   résolus en gardant toutes les entrées ; `__init__.py` fusionné automatiquement (64 noms exportés, tous présents).
