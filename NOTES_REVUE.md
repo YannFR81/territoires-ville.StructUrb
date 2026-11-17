@@ -16,6 +16,21 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture de claude/charte-signature (b313d54 + fb6ce08), PR n° 4
+(Relecture transmise par YannFR81, reportée ici par Claude.)
+- Vérifié :
+  - `structurb/signature.py` : palette du fork (`#DD590A`, `#5E99C5`, `#179D87`, `#7F0541`), devise et signature en un seul
+    endroit, aucun nom de collectivité.
+  - `structurb/_images.py` et `structurb/assets/` : icône V1 en SVG, pictogrammes embarqués en base64 (concordance avec les PNG),
+    logos CERTU / Cerema uniquement dans `#origine` (« portage non officiel »).
+  - `structurb/rapport.py` et `structurb/dxf.py` : couleurs V1 des couches avec `rang` (base 1 / 2, fondation 1 / 2),
+    calques `STRUCTURB_BASE_2` et `STRUCTURB_FONDATION_2`, ACI 4 / 94 / 3 / 1 / 6.
+  - `structurb/page.py` et `pyproject.toml` : bandeau lie-de-vin → orange, aide `#FFFFE1`, hors limites `#FF0000`,
+    `assets/*` dans `package-data` ; aucun algorithme de calcul modifié.
+  - Tests sous Python 3.9 : 19 / 19 (`tests/test_charte_v1.py`, `tests/test_signature.py`).
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+- En suspens : rendu des calques DXF dans AutoCAD / COVADIS non vérifié ; § 6 de la charte (calculs) à traiter à part.
+
 ## 2026-11-17 — Claude — branche claude/charte-signature (charte graphique de Struct-Urb V1, §1 à 5)
 - Source : `CHARTE_V1.md` (relevé fait sous Cowork dans les sources VB6), transmis par YannFR81.
   Consigne de YannFR81 : **charte seulement, aucun calcul modifié** ; le §6 (giratoires, plages de trafic, durée 5–50 ans,
