@@ -16,6 +16,16 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture du commit 37fc78f (page autonome, claude/export-cli)
+- Vérifié :
+  - `structurb/page.py` (`calculer_depuis_json`, `generer_page`, `listes`, `OUTIL`, `_GABARIT`) :
+    - `calculer_depuis_json` : validation stricte des entrées JSON (`_entier`, `_reel`, `_choix`, `_booleen`), rejet propre des booléens pris pour des entiers, filtrage de la structure sur le type de voie, messages d'erreur en français ;
+    - `generer_page` : embarque toutes les sources `structurb/*.py` et `Certu.str`/`Certu.mts` (base64), substitution en une seule passe (`re.sub`), Pyodide figé (`0.26.4`), JSON protégé par `_json_script` (`<` -> `\u003c`), formulaire accessible + `window.structurb` + outil `dimensionner_chaussee` (JSON Schema + WebMCP).
+  - `structurb/cli.py` (sous-commande `page --sortie`) & `README.md` : clairs et complets.
+  - `tests/test_page.py` : **15 / 15** cas passés sous `python3.9` (via shim `pytest`).
+  - Essai CLI : `python3.9 -m structurb page --sortie .../scratch/structurb_page.html` génère bien la page autonome sans erreur.
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+
 ## 2026-11-17 — Claude — page autonome pilotable par les IA du navigateur (branche claude/export-cli)
 Décision de YannFR81 : « Page autonome » (plutôt qu’un serveur local Python).
 - Fait (tests écrits avant le code) :
