@@ -28,7 +28,7 @@ from .etude import TYPES_STRUCTURE, dimensionner_etude, structures_compatibles
 from .gel import HIVERS_REFERENCE, STATIONS_METEO, obtenir_station
 from .rapport import NOMS_VOIE, _json_script, donnees_note, note_calcul_html
 from .signature import signature_html
-from .trafic import TYPES_VOIE
+from .trafic import TYPES_VOIE, bornes_trafic_initial
 
 PYODIDE_VERSION = "0.26.4"
 PYODIDE_URL = f"https://cdn.jsdelivr.net/pyodide/v{PYODIDE_VERSION}/full/"
@@ -268,7 +268,15 @@ def listes(dossier_catalogue: Optional[Union[str, Path]] = None) -> dict:
         for i, _ in structures_compatibles(cat, v):
             voies_par_index.setdefault(i, []).append(v)
     return {
-        "voies": [{"code": v, "nom": NOMS_VOIE.get(v, v)} for v in TYPES_VOIE],
+        "voies": [
+            {
+                "code": v,
+                "nom": NOMS_VOIE.get(v, v),
+                "trafic_min": max(1, bornes_trafic_initial(v)[0]),
+                "trafic_max": bornes_trafic_initial(v)[3],
+            }
+            for v in TYPES_VOIE
+        ],
         "structures": [
             {
                 "index": i,
@@ -760,6 +768,12 @@ __DOCUMENTATION__
     if (optPF1) {
       optPF1.disabled = gir;
       if (gir && selPF.value === "PF1") selPF.value = "PF2";
+    }
+    const vInfo = LISTES.voies.find((v) => v.code === selVoie.value);
+    const chTraf = $("champ-trafic_initial_pl");
+    if (vInfo && chTraf) {
+      chTraf.min = String(vInfo.trafic_min);
+      chTraf.max = String(vInfo.trafic_max);
     }
   }
   selVoie.addEventListener("change", remplirStructures);

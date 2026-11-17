@@ -304,7 +304,7 @@ def note_calcul_html(
     ]
     alertes = []
     if r.ne_hors_limite:
-        alertes.append("NE supérieur à 10 000 000 : hors du domaine de Struct-Urb.")
+        alertes.append("NE supérieur au maximum de la structure ou à 10 000 000 : hors du domaine de Struct-Urb.")
     if r.etude_labo:
         alertes.append("Trafic élevé : une étude en laboratoire est conseillée.")
 

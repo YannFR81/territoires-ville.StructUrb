@@ -36,10 +36,12 @@ from .gel import (
 )
 from .trafic import (
     TYPES_VOIE,
+    bornes_trafic_initial,
     cam_preconise,
     etude_labo_conseillee,
     ne_equivalent,
     ne_hors_limite,
+    statut_trafic_initial,
     trafic_cumule,
 )
 
@@ -205,11 +207,18 @@ def dimensionner_etude(
 ) -> ResultatEtude:
     """Exécute un dimensionnement complet (Trafic -> NE -> Épaisseurs -> Surface -> Gel).
 
-    Réf. VB6 : ``frmDocument.frm`` (l. 2985-2989 : PF1 interdite en giratoire).
+    Réf. VB6 : ``frmDocument.frm`` (l. 2985-2989 : PF1 interdite en giratoire) ;
+    ``ModuleSaisie.bas :: VerifierMinMaxTraficIni`` (l. 51-103 : plage tolérée de trafic initial).
     """
     if type_voie in ("giratoire_distribution", "giratoire_trafic_lourd") and plate_forme == "PF1":
         raise ValueError(
             "La plate-forme PF1 n’est pas admise pour un giratoire (choisir PF2, PF2+ ou PF3)."
+        )
+    if statut_trafic_initial(trafic_initial_pl, type_voie) == "hors_domaine":
+        min_tol, _, _, max_tol = bornes_trafic_initial(type_voie)
+        raise ValueError(
+            f"Trafic initial hors domaine pour {type_voie} : "
+            f"{trafic_initial_pl} PL/j (plage tolérée : {min_tol} à {max_tol} PL/j)."
         )
     t_cum = trafic_cumule(trafic_initial_pl, croissance_pct, duree_ans)
     famille = TYPES_STRUCTURE.get(structure.type_structure, "")
@@ -224,7 +233,7 @@ def dimensionner_etude(
         )[0]
     )
     ne = ne_equivalent(t_cum, cam_val)
-    hors_lim = ne_hors_limite(ne)
+    hors_lim = ne_hors_limite(ne) or ne > structure.nb_essieux_max
     labo = etude_labo_conseillee(trafic_initial_pl, type_voie)
 
     res_ep: Optional[ResultatEpaisseur] = None

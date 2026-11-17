@@ -92,3 +92,57 @@ def test_pf1_refusee_en_giratoire_api_page():
     assert r["ok"] is False
     assert "PF1" in r["erreur"]
     assert "giratoire" in r["erreur"].lower()
+
+
+# --- 3. Plages de trafic et ne_hors_limite > ne_max de la structure ----------
+
+@pytest.mark.parametrize("voie, trafic", [
+    ("desserte", 31),
+    ("distribution", 19),
+    ("distribution", 171),
+    ("trafic_lourd", 119),
+    ("trafic_lourd", 1001),
+    ("bus", 1001),
+    ("giratoire_distribution", 19),
+    ("giratoire_trafic_lourd", 119),
+])
+def test_trafic_hors_plage_refuse(catalogues, voie, trafic):
+    cat_str, cat_mts = catalogues
+    idx = 16 if voie.startswith("giratoire_") else 1
+    with pytest.raises(ValueError, match="domaine|plage|tolér"):
+        dimensionner_etude(
+            cat_str, cat_mts, cat_str.structures[idx],
+            type_voie=voie,
+            trafic_initial_pl=trafic,
+            croissance_pct=1,
+            duree_ans=20,
+            plate_forme="PF2",
+        )
+
+
+def test_ne_hors_limite_si_superieur_ne_max_structure(catalogues):
+    cat_str, cat_mts = catalogues
+    es_gnt = cat_str.structures[0]  # nb_essieux_max = 100_000
+    res = dimensionner_etude(
+        cat_str, cat_mts, es_gnt,
+        type_voie="trafic_lourd",
+        trafic_initial_pl=500,
+        croissance_pct=5,
+        duree_ans=30,
+        plate_forme="PF2",
+    )
+    assert res.ne_equivalent > es_gnt.nb_essieux_max
+    assert res.ne_hors_limite is True
+    assert res.epaisseur is None
+
+    r = json.loads(calculer_depuis_json(json.dumps({
+        "index": 0,
+        "type_voie": "desserte",
+        "trafic_initial_pl": 30,
+        "croissance_pct": 5,
+        "duree_ans": 50,
+        "plate_forme": "PF2",
+    }), dossier_catalogue=REPO_ROOT))
+    assert r["ok"] is True
+    assert r["donnees"]["resultats"]["ne_equivalent"] > es_gnt.nb_essieux_max
+    assert r["donnees"]["resultats"]["ne_hors_limite"] is True
