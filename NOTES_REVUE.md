@@ -16,6 +16,34 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — comparaison du calcul au gel de Struct-Urb avec la NF P98-086 (2019)
+Demande de YannFR81. Lecture de la norme (exemplaire sous licence, hors du dépôt) : aucun extrait recopié ici,
+seulement les conclusions et les numéros de paragraphes. Rien n’est modifié dans le code.
+- Stations météo : le tableau B.9 (annexe B.4) donne les indices de l’hiver exceptionnel et de l’hiver rigoureux non
+  exceptionnel pour 84 stations. `STATIONS_METEO` : **82 identiques** ; Saint-Raphaël et Toulon illisibles dans l’OCR
+  (Struct-Urb : 0). L’hiver courant n’est pas dans la norme.
+- Altitude : aucune correction dans la norme ; elle conseille les données des postes climatologiques proches.
+  Confirme le choix de l’indice de gel personnel.
+- Méthode (§ 6.2) : la formule de Struct-Urb est la **méthode simplifiée** de l’annexe H.3 (informative, réservée au
+  pré-dimensionnement et plus prudente que la méthode normalisée), et non la méthode normalisée (modèle thermique
+  numérique de l’annexe H).
+  - Qg (sol gélif homogène) : identique (§ 6.2.1.3). Configuration « peu gélif sur très gélif » : **non traitée** par Struct-Urb.
+  - Qng : même forme (§ 6.2.1.4) ; Struct-Urb simplifie le coefficient A à 12 (non traité) ou 14 (traité) ;
+    la norme donne 12 à 17 selon le matériau (tableau C.9).
+  - QM : précalculé dans le catalogue chez Struct-Urb ; calcul mécanique itératif dans la norme (§ 6.2.1.5).
+  - Passage à l’indice atmosphérique (§ 6.2.4) : la norme divise par **Kcr = 0,7** (France métropolitaine hors milieu urbain),
+    **le VB6 divise par 0,6**. Origine du 0,6 inconnue.
+  - Agglomération : facteurs 0,9 et 0,8 identiques (seuils 100 000 et 1 000 000 habitants) ; appliqués à IA dans la norme,
+    à IR dans Struct-Urb : équivalent.
+  - Coefficients aG / bG (tableau H.2) conformes, sauf **GCV** (Struct-Urb 1,2 / 13 ; norme 0,8 / 10 ; 3 structures)
+    et la grave-émulsion (0 / 0 chez Struct-Urb, absente de la norme).
+- Effet chiffré (PF2, Q1, pente 0,5, Hn = 0 ou 30 cm) : la méthode simplifiée de la norme donne un indice admissible
+  **10 à 14 % plus bas** que Struct-Urb (ex. Enrobés/GNT 52 → 46 ; BC5/GNT 103 → 90 ; Pavés/GNT 60 → 53 °C·j),
+  entièrement dû à Kcr. Comparaison avec la méthode normalisée impossible sans programmer le modèle thermique.
+- Pistes, non engagées : option « norme 2019, méthode simplifiée » (Kcr = 0,7, coefficients GCV), comme l’option
+  d’épaisseurs ; configuration de sol de type c ; plus tard, modèle thermique de l’annexe H.
+- Question pour YannFR81 : aucune pour l’instant (décision « noter seulement »).
+
 ## 2026-11-17 — Claude — option d’épaisseurs pour le calcul au gel (branche claude/option-gel-epaisseurs)
 - Décision de YannFR81 : les 3 cm d’affichage et le lit de pose dans l’indice de gel admissible → **« En faire une option »**.
 - Fait :
