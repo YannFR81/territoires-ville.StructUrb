@@ -237,9 +237,13 @@ def _resume(d: dict) -> str:
         f"{d['structure']['abrege'].strip()} – NE {_nb(r['ne_equivalent'])}"
         + (f" (NE théorique {_nb(r['ne_theorique'])})" if r["ne_theorique"] else " – épaisseurs non trouvées"),
     ]
+    giratoire = d.get("entrees", {}).get("type_voie") in ("giratoire_distribution", "giratoire_trafic_lourd")
     for nom in ("q1", "q2"):
         q = r[nom]
         if q is None:
+            continue
+        if nom == "q2" and giratoire and not q["trouvee"]:
+            lignes.append("Q2 : sans objet (giratoire)")
             continue
         couches = " + ".join(f"{c['materiau']} {c['epaisseur_cm']}" for c in q["couches"] if c["epaisseur_cm"])
         lignes.append(f"{nom.upper()} : {couches} cm" if q["trouvee"] else f"{nom.upper()} : non trouvée")

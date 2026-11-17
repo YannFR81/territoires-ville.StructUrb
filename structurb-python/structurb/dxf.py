@@ -93,7 +93,12 @@ def _dessiner_qualite(d: _Dxf, x0: float, nom: str, q: ResultatQualite, s: Struc
     t = CALQUES["texte"][0]
     d.texte(t, x0, 2 * _TITRE_CM, _TITRE_CM, f"{nom} - {s.abrege.strip()} - {plate_forme}", centre_v=False)
     if not q.trouvee:
-        d.texte(t, x0, -_TEXTE_CM * 2, _TEXTE_CM, "Épaisseur non trouvée (maximum pratique atteint)")
+        msg = (
+            f"{nom} : sans objet (giratoire)"
+            if nom == "Q2" and all(e == 0 for e in q.epaisseurs)
+            else "Épaisseur non trouvée (maximum pratique atteint)"
+        )
+        d.texte(t, x0, -_TEXTE_CM * 2, _TEXTE_CM, msg)
         return
     y = 0.0
     x1 = x0 + _LARGEUR_CM

@@ -111,6 +111,30 @@ def epaisseur_possible(
 def _resultat_qualite(
     ligne: LigneEpaisseur, structure: StructureChaussee
 ) -> ResultatQualite:
+    """Construit le résultat d'une qualité à partir d'une ligne du catalogue.
+
+    Réf. VB6 : ``ModuleMain.bas :: RechercherEpaisseur`` (l. 2722-2779) et
+    ``AfficherCarottes`` (l. 1750-1751 : pas de Q2 en étude giratoire).
+    Les grilles Q2 des structures giratoires ont toutes leurs épaisseurs à 0
+    dans ``Certu.str`` : ``trouvee`` vaut alors ``False``.
+    """
+    grille_vide = (
+        ligne.epaisseur_surface == 0
+        and ligne.epaisseur_base_1 == 0
+        and ligne.epaisseur_base_2 == 0
+        and ligne.epaisseur_fondation_1 == 0
+        and ligne.epaisseur_fondation_2 == 0
+    )
+    if grille_vide:
+        return ResultatQualite(
+            epaisseurs=(0, 0, 0, 0, 0, 0),
+            epaisseur_preconisee=0,
+            qm=ligne.qm,
+            min_technique=ligne.min_technique,
+            max_pratique=ligne.max_pratique,
+            trouvee=False,
+            ligne=ligne,
+        )
     ep = [
         ligne.epaisseur_surface,
         0,
