@@ -16,6 +16,18 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture des correctifs du lot 7 .urb (a63002f, branche gemini/lot-urb)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **132 / 132**.
+  - Point 1 : lecture du fichier comme un flux CSV (une chaîne entre guillemets peut contenir des retours à la ligne).
+    Aller-retour vérifié pour un titre vide, simple, sur deux lignes, avec ligne vide, avec virgule ; et lecture d’un fichier
+    écrit comme le VB6 (CRLF dans le titre, coefficient écrit `.12`, pente vide) : conforme.
+  - Point 3 : écriture en CRLF partout, y compris dans le titre.
+  - Point 4 : ambiguïté du numéro 69 documentée. Point 5 : note de calcul avec couches et matériaux nommés,
+    épaisseurs du catalogue, sans LaTeX.
+  - Point 2 : en suspens (pas de `.urb` réel), comme décidé.
+- Verdict : **BON POUR FUSION** de la part de Claude, après `gemini/lot-norme-2019`.
+
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-urb (correctifs relecture Claude)
 - Fait :
   1. `lire_urb` (`structurb/urb.py`) : lecture en flux `csv.reader` complet (au lieu d'un découpage ligne par ligne) — gère les titres multi-lignes avec lignes vides sans guillemet parasite.
