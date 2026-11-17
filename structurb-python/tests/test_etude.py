@@ -105,7 +105,7 @@ def test_etude_complete_paves_gnt_avec_gel_et_option_vb6(catalogues):
 
 def test_etude_materiau_compose_et_hors_limite(catalogues):
     cat_str, cat_mts = catalogues
-    # Structure Enrobés/GB3/GB3 (matériau de surface composé "Enrobés")
+    # Structure Enrobés/GNT (matériau de surface composé "Enrobés")
     s_enr = cat_str.structures_par_abrege["Enrobés/GNT"][0]
     mat_surf = cat_mts.obtenir(s_enr.couche_surface)
     comps = compositions_surface_compatibles(mat_surf, 6)
@@ -139,3 +139,66 @@ def test_etude_materiau_compose_et_hors_limite(catalogues):
         plate_forme="PF2",
     )
     assert res_hl.epaisseur is None
+
+
+def test_etude_labo_trafic_lourd_900(catalogues):
+    # Point 1 : etude_labo_conseillee attend le trafic initial (PL/j), pas le NE
+    cat_str, cat_mts = catalogues
+    s_gb3 = cat_str.structures_par_abrege["Enrobés/GB3/GB3"][0]
+    res = dimensionner_etude(
+        catalogue_structures=cat_str,
+        catalogue_surfaces=cat_mts,
+        structure=s_gb3,
+        type_voie="trafic_lourd",
+        trafic_initial_pl=900,
+        croissance_pct=2,
+        duree_ans=20,
+        plate_forme="PF3",
+    )
+    assert res.ne_equivalent == 1_563_660
+    assert res.etude_labo is True
+    assert res.epaisseur is not None
+
+
+def test_compositions_q1_trouvee_q2_non_trouvee(catalogues):
+    # Point 3 (décision YannFR81) : comme le VB6, remplir Q1 et Q2 dès que l'une des deux est trouvée
+    cat_str, cat_mts = catalogues
+    s_enr = cat_str.structures[1]  # Enrobés/GNT (1000..100000)
+    # En PF1, au palier 60 000 (indice 15), Q1 est trouvée (ep_prec=6) mais Q2 non (ep_prec=0)
+    # 35 PL/j * 365 * 23.8 * 0.2 = 60 809 -> palier 70 000 ou 32 PL/j -> 55 597 -> palier 60 000
+    res = dimensionner_etude(
+        catalogue_structures=cat_str,
+        catalogue_surfaces=cat_mts,
+        structure=s_enr,
+        type_voie="distribution",
+        trafic_initial_pl=32,
+        croissance_pct=2,
+        duree_ans=20,
+        plate_forme="PF1",
+    )
+    assert res.epaisseur is not None
+    assert res.epaisseur.ne_theorique == 60000
+    assert res.epaisseur.q1.trouvee is True
+    assert res.epaisseur.q2.trouvee is False
+    assert len(res.compositions_q1) >= 1
+    assert res.compositions_q2 == ()  # ep_prec=0 dans Certu.mts -> aucune composition pour 0 cm
+
+
+def test_indice_gel_personnel_sans_station(catalogues):
+    cat_str, cat_mts = catalogues
+    res = dimensionner_etude(
+        catalogue_structures=cat_str,
+        catalogue_surfaces=cat_mts,
+        structure=cat_str.structures[1],
+        type_voie="distribution",
+        trafic_initial_pl=20,
+        croissance_pct=2,
+        duree_ans=20,
+        plate_forme="PF2",
+        indice_gel_perso=85,
+        pente_sol_pourcent=0.5,
+    )
+    assert res.indice_gel_ref == 85
+    assert res.gel_q1 is not None
+    assert res.gel_q2 is not None
+    assert res.gel_q1.indice_gel_adm != res.gel_q2.indice_gel_adm

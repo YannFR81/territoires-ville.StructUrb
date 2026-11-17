@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-etude (correctifs relecture Claude)
+- Fait :
+  1. `dimensionner_etude` (`structurb/etude.py`) : passage de `trafic_initial_pl` (et non `ne`) à `etude_labo_conseillee(trafic_initial_pl, type_voie)`.
+  2. `dimensionner_etude` : suppression de la station `"Toulouse"` en dur quand seul `indice_gel_perso` est fourni (utilisation de `STATIONS_METEO[0]` uniquement pour satisfaire la signature, court-circuitée par `indice_personnel`).
+  3. Compositions de surface (décision YannFR81) : remplissage de `compositions_q1` et `compositions_q2` dès que `res_ep.q1.trouvee or res_ep.q2.trouvee` (comme le VB6).
+  4. Docstring de `structures_compatibles` : documentation des extensions par rapport au VB6 (`type_structure=None` et `materiaux_exclus`).
+  5. `tests/test_etude.py` : commentaire corrigé (`Enrobés/GNT`), ajout de `test_etude_labo_trafic_lourd_900` (`900 PL/j`, `2 %`, `20 ans`, `Enrobés/GB3/GB3`, `PF3` -> `NE = 1 563 660`, `etude_labo = True`), `test_compositions_q1_trouvee_q2_non_trouvee` et `test_indice_gel_personnel_sans_station`.
+- Vérifié (tests, cas de référence) :
+  - `tests/test_etude.py` : **6 / 6** tests passés sous Python 3.9 (via shim `pytest`, `pytest` n'étant pas installé dans `python3.9`).
+- En suspens :
+  - Contre-relecture finale et exécution de `python -m pytest -q` par Claude, puis fusion dans `main`.
+- À relire par Claude :
+  - `structurb-python/structurb/etude.py` et `structurb-python/tests/test_etude.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Claude — relecture du lot 5 Étude (349ff79, branche gemini/lot-etude)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **125 / 125**.

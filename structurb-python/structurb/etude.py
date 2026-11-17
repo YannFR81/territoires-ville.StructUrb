@@ -26,6 +26,7 @@ from .epaisseur import (
     rechercher_epaisseur,
 )
 from .gel import (
+    STATIONS_METEO,
     StationMeteo,
     chaussee_verifiee_au_gel,
     indice_gel_admissible,
@@ -96,7 +97,9 @@ def structures_compatibles(
 ) -> Tuple[Tuple[int, StructureChaussee], ...]:
     """Retourne les couples ``(index, structure)`` compatibles avec le type de voie.
 
-    Réf. VB6 : ``ModuleMain.bas :: RemplirComboStructures`` (lignes 1593-1670).
+    Extensions par rapport au VB6 (``ModuleMain.bas :: RemplirComboStructures``, l. 1593-1670) :
+    - ``type_structure=None`` accepte tous les types de structures (le VB6 en exige un) ;
+    - ``materiaux_exclus`` remplace le drapeau ``monUtilisationAutorisée`` des options générales.
     """
     if type_voie not in _ATTR_VOIE_STRUCTURE:
         raise ValueError(f"Type de voie inconnu : {type_voie!r} (attendu : {TYPES_VOIE}).")
@@ -206,7 +209,7 @@ def dimensionner_etude(
     )
     ne = ne_equivalent(t_cum, cam_val)
     hors_lim = ne_hors_limite(ne)
-    labo = etude_labo_conseillee(ne, type_voie)
+    labo = etude_labo_conseillee(trafic_initial_pl, type_voie)
 
     res_ep: Optional[ResultatEpaisseur] = None
     if epaisseur_possible(ne, structure, plate_forme):
@@ -215,17 +218,24 @@ def dimensionner_etude(
     comps_q1: Tuple[CompositionSurface, ...] = ()
     comps_q2: Tuple[CompositionSurface, ...] = ()
     if res_ep is not None and structure.couche_surface != "Aucune":
-        mat_surf = catalogue_surfaces.obtenir(structure.couche_surface)
-        if res_ep.q1.trouvee:
+        if res_ep.q1.trouvee or res_ep.q2.trouvee:
+            mat_surf = catalogue_surfaces.obtenir(structure.couche_surface)
             comps_q1 = compositions_surface_compatibles(mat_surf, res_ep.q1.epaisseur_preconisee)
-        if res_ep.q2.trouvee:
             comps_q2 = compositions_surface_compatibles(mat_surf, res_ep.q2.epaisseur_preconisee)
 
     i_ref: Optional[int] = None
-    if indice_gel_perso is not None or station is not None:
-        st_ref = station if station is not None else "Toulouse"
+    if indice_gel_perso is not None:
         i_ref = indice_gel_reference(
-            st_ref, hiver=hiver, taille_agglo=taille_agglo, indice_personnel=indice_gel_perso
+            STATIONS_METEO[0],
+            hiver=hiver,
+            taille_agglo=taille_agglo,
+            indice_personnel=indice_gel_perso,
+        )
+    elif station is not None:
+        i_ref = indice_gel_reference(
+            station,
+            hiver=hiver,
+            taille_agglo=taille_agglo,
         )
 
     gel_q1: Optional[ResultatGelQualite] = None
