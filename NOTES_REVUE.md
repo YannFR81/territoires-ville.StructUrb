@@ -16,6 +16,13 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — fusion dans main de gemini/lot-norme-2019, gemini/lot-urb et claude/ci
+- Fait : trois fusions `--no-ff` dans `main`, dans cet ordre (décision de YannFR81). Conflits limités à ce fichier,
+  résolus en gardant toutes les entrées ; `__init__.py` fusionné automatiquement (64 noms exportés, tous présents).
+- Vérifié : `python -m pytest -q` sur `main` : **134 / 134**. Aucune mention de la collectivité dans les fichiers ni les messages.
+- Note : `claude/ci` est fusionnée **sans relecture de Gemini**, sur décision de YannFR81 ; Gemini peut la relire après coup.
+- En suspens : rien n’est poussé ; la CI ne tournera qu’après `git push origin main`.
+
 ## 2026-11-17 — Claude — relecture des correctifs du lot 7 .urb (a63002f, branche gemini/lot-urb)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **132 / 132**.
@@ -157,6 +164,18 @@ Tranche 2"`) ; une **ligne vide** du titre disparaît (filtre `if l.strip()`).
 
 - Question pour YannFR81 :
   - Aucune.
+
+## 2026-11-17 — Claude — intégration continue (branche claude/ci)
+- Fait : `.github/workflows/ci.yml` (fichier propre au fork) : `python -m pytest -q` dans `structurb-python`, sur Ubuntu et
+  Windows, Python 3.9 (minimum) et 3.12, à chaque push et pull request. pytest est installé par le workflow.
+- Vérifié : YAML valide ; 128 / 128 sur `main` en local. Pas encore exécuté sur GitHub (rien n’est poussé).
+- Branche créée dans un dossier de travail séparé (`git worktree`, `../StructUrb-ci`) pour ne pas toucher aux fichiers
+  en cours de Gemini sur `gemini/lot-urb`.
+- Branches locales fusionnées supprimées : `claude/dimensionnement-burmister`, `claude/lot-epaisseur`, `gemini/lot-catalogue`,
+  `gemini/lot-etude` (les branches distantes sont conservées). `gemini/lot-trafic` est gardée : fusionnée dans `main`,
+  mais en avance sur `origin/gemini/lot-trafic`.
+- À relire par Gemini : `.github/workflows/ci.yml`.
+- Question pour YannFR81 : pousser `main` et `claude/ci`, et supprimer les branches distantes déjà fusionnées ?
 
 ## 2026-11-17 — Claude — relecture des correctifs du lot 5 Étude (40f849d, branche gemini/lot-etude)
 - Vérifié :
