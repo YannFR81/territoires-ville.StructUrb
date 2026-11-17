@@ -26,6 +26,8 @@ from .epaisseur import (
     rechercher_epaisseur,
 )
 from .gel import (
+    AGEL_GCV_NF_P98_086,
+    BGEL_GCV_NF_P98_086,
     STATIONS_METEO,
     StationMeteo,
     chaussee_verifiee_au_gel,
@@ -156,6 +158,7 @@ def _coefs_gel_structure(
     structure: StructureChaussee,
     catalogue_structures: CatalogueStructures,
     catalogue_surfaces: CatalogueMatSurface,
+    norme_2019: bool = False,
 ) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
     if structure.couche_surface == "Aucune":
         a_cs, b_cs = 0.0, 0.0
@@ -164,10 +167,15 @@ def _coefs_gel_structure(
         a_cs, b_cs = ms.a_gel, ms.b_gel
 
     mb = catalogue_structures.obtenir_materiau_bf(structure.couche_base)
-    a_cb, b_cb = mb.a_gel, mb.b_gel
+    if norme_2019 and structure.couche_base.upper() == "GCV":
+        a_cb, b_cb = AGEL_GCV_NF_P98_086, BGEL_GCV_NF_P98_086
+    else:
+        a_cb, b_cb = mb.a_gel, mb.b_gel
 
     if structure.couche_fondation == "Aucune":
         a_cf, b_cf = 0.0, 0.0
+    elif norme_2019 and structure.couche_fondation.upper() == "GCV":
+        a_cf, b_cf = AGEL_GCV_NF_P98_086, BGEL_GCV_NF_P98_086
     else:
         mf = catalogue_structures.obtenir_materiau_bf(structure.couche_fondation)
         a_cf, b_cf = mf.a_gel, mf.b_gel
@@ -193,6 +201,7 @@ def dimensionner_etude(
     couche_forme_traitee: bool = False,
     pente_sol_pourcent: Optional[float] = None,
     fidele_vb6: bool = True,
+    norme_2019: bool = False,
 ) -> ResultatEtude:
     """Exécute un dimensionnement complet (Trafic -> NE -> Épaisseurs -> Surface -> Gel)."""
     t_cum = trafic_cumule(trafic_initial_pl, croissance_pct, duree_ans)
@@ -241,7 +250,9 @@ def dimensionner_etude(
     gel_q1: Optional[ResultatGelQualite] = None
     gel_q2: Optional[ResultatGelQualite] = None
     if res_ep is not None and pente_sol_pourcent is not None:
-        agel, bgel = _coefs_gel_structure(structure, catalogue_structures, catalogue_surfaces)
+        agel, bgel = _coefs_gel_structure(
+            structure, catalogue_structures, catalogue_surfaces, norme_2019=norme_2019
+        )
         if res_ep.q1.trouvee:
             ep_g1 = epaisseurs_pour_gel(res_ep.q1, fidele_vb6=fidele_vb6)
             adm1 = indice_gel_admissible(
@@ -252,6 +263,7 @@ def dimensionner_etude(
                 epaisseur_non_gelive_cm=epaisseur_non_gelive_cm,
                 couche_forme_traitee=couche_forme_traitee,
                 pente_sol_pourcent=pente_sol_pourcent,
+                norme_2019=norme_2019,
             )
             ok1 = chaussee_verifiee_au_gel(i_ref, adm1) if i_ref is not None else False
             gel_q1 = ResultatGelQualite(epaisseurs_gel=ep_g1, indice_gel_adm=adm1, verifiee=ok1)
@@ -265,6 +277,7 @@ def dimensionner_etude(
                 epaisseur_non_gelive_cm=epaisseur_non_gelive_cm,
                 couche_forme_traitee=couche_forme_traitee,
                 pente_sol_pourcent=pente_sol_pourcent,
+                norme_2019=norme_2019,
             )
             ok2 = chaussee_verifiee_au_gel(i_ref, adm2) if i_ref is not None else False
             gel_q2 = ResultatGelQualite(epaisseurs_gel=ep_g2, indice_gel_adm=adm2, verifiee=ok2)

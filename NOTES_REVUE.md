@@ -16,6 +16,21 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-norme-2019 (correctifs relecture Claude)
+- Fait :
+  1. `dimensionner_etude` (`structurb/etude.py`) : ajout du paramètre `norme_2019: bool = False`, transmis à `_coefs_gel_structure` et `indice_gel_admissible`.
+  2. `_coefs_gel_structure` : lorsque `norme_2019=True`, les couches `GCV` utilisent `AGEL_GCV_NF_P98_086` (`0.008` cm⁻¹) et `BGEL_GCV_NF_P98_086` (`0.10`).
+  3. Docstring de `indice_gel_admissible` (`structurb/gel.py`) : précision que `norme_2019=True` couvre uniquement la méthode simplifiée (annexe H.3), en excluant le coefficient A (12 à 17, tableau C.9), le sol de type c et la méthode normalisée (modèle thermique).
+  4. `tests/test_etude.py` : ajout de `test_dimensionner_etude_norme_2019_gcv` sur `Enrobés/GCV` (`norme_2019=True` vs `False`).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_gel.py` (**10 / 10**) et `tests/test_etude.py` (**7 / 7**) passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Contre-relecture et lancement complet `python -m pytest -q` par Claude.
+- À relire par Claude :
+  - `structurb-python/structurb/etude.py`, `structurb-python/structurb/gel.py`, `structurb-python/tests/test_etude.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Claude — relecture de l’option norme 2019 (34ecbc4, branche gemini/lot-norme-2019)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **129 / 129**.

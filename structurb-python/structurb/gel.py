@@ -294,7 +294,10 @@ def indice_gel_admissible(
       et finie), retourne ``HORS_GEL`` (1 000 000 000). Si ``None``, retourne ``0`` (inconnu).
       Si ``math.inf`` (``MsgInfinie``, très gélif), le calcul utilise ``Qg = 0``.
     - ``norme_2019`` : ``False`` (défaut, ``Kcr = 0.6`` fidèle au VB6) ou ``True``
-      (méthode simplifiée NF P 98-086 § 6.2.4, ``Kcr = 0.7``).
+      (méthode simplifiée de l'annexe H.3 de la NF P 98-086, pré-dimensionnement,
+      ``Kcr = 0.7``). Restent hors périmètre : le coefficient ``A`` de 12 à 17
+      (tableau C.9), le sol « peu gélif sur très gélif » (type c) et la méthode
+      normalisée (modèle thermique).
 
     Réf. VB6 : ``ModuleMain.bas :: CalculerIndiceGelAdm`` (lignes 2537-2642).
     """
