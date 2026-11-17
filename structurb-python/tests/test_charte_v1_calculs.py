@@ -242,3 +242,23 @@ def test_grave_emulsion_gel_fidele_vb6(catalogues):
     )
     assert res.gel_q1 is not None
     assert res.gel_q1.indice_gel_adm == 17
+
+
+# --- 7. Non-régression de la notice : NPL pour d = 20 ans, t = 1 % -----------
+
+@pytest.mark.parametrize("mja, ordre_grandeur", [
+    (1, 8_000),
+    (12, 100_000),
+    (25, 200_000),
+    (100, 800_000),
+    (150, 1_200_000),
+    (500, 4_000_000),
+    (1000, 8_000_000),
+])
+def test_notice_npl_20_ans_1_pourcent(mja, ordre_grandeur):
+    """Notice Struct-Urb 2.1 : d = 20 ans, t = 1 % -> facteur 21,9 ; NPL = 365 * MJA * 21,9."""
+    from structurb.trafic import trafic_cumule
+    npl = trafic_cumule(mja, 1, 20)
+    attendu = round(365 * mja * 21.9)
+    assert abs(npl - attendu) <= 1
+    assert abs(npl - ordre_grandeur) / ordre_grandeur < 0.05
