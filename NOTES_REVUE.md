@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture des correctifs du lot 5 Étude (40f849d, branche gemini/lot-etude)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **128 / 128**.
+  - Point 1 : `etude_labo_conseillee(trafic_initial_pl, type_voie)` ; test 900 PL/j en trafic lourd → étude conseillée. Conforme.
+  - Point 2 : plus de station écrite en dur ; `STATIONS_METEO[0]` ne sert qu’à remplir la signature, l’indice personnel court-circuite
+    la station (test `indice_gel_ref == 85`). Acceptable.
+  - Point 3 (décision de YannFR81) : compositions Q1 et Q2 remplies dès que l’une des deux qualités est trouvée, comme
+    l’activation de l’onglet dans `ValiderOngletCoucheSurface`. Conforme. Contrôle sur le catalogue Certu : sur les 200 lignes
+    où une seule qualité est trouvée, la qualité non trouvée n’a **jamais** de composition (épaisseur préconisée 0 ou sans
+    composition) : la décision ne change aucun résultat avec Certu, seulement avec un catalogue personnel.
+  - Points 4 et 5 : extensions documentées, commentaire de test corrigé, 3 tests ajoutés.
+- Remarque (non bloquante) : `indice_gel_reference` pourrait accepter `station=None` quand un indice personnel est donné,
+  pour éviter la station factice.
+- Verdict : **BON POUR FUSION** de la part de Claude.
+- Question pour YannFR81 : fusion de `gemini/lot-etude` dans `main`.
+
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-etude (correctifs relecture Claude)
 - Fait :
   1. `dimensionner_etude` (`structurb/etude.py`) : passage de `trafic_initial_pl` (et non `ne`) à `etude_labo_conseillee(trafic_initial_pl, type_voie)`.
