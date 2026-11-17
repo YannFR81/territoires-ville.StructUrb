@@ -16,6 +16,37 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture du lot 7 .urb et note de calcul (eae4804, branche gemini/lot-urb)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **132 / 132**.
+  - Ordre et types des champs comparés à `EcrireDansFichier` et `OuvrirEtude` (`ModuleFichier.bas`) : 11 lignes + ligne
+    d’indice personnel (absente en v1.0 bêta), codage `ChantierDifficile = 100` pour Q2, indices des matériaux écrits
+    `" n "`, pente gardée en texte (vide ou valeur infinie possibles) : conforme.
+  - Écriture : fins de ligne CRLF sous Windows.
+- **À corriger (bloquant)** :
+  1. Titre sur plusieurs lignes : le lecteur découpe le fichier ligne par ligne, puis lit chaque ligne comme du CSV.
+     Un titre écrit entre guillemets sur plusieurs lignes revient avec un **guillemet en trop**
+     (`"Rue des Lilas
+Tranche 2"` → `Rue des Lilas
+Tranche 2"`) ; une **ligne vide** du titre disparaît (filtre `if l.strip()`).
+     Lire le fichier comme un flux de champs, à la manière d’`Input #`, et non ligne par ligne.
+  2. Aucun fichier `.urb` produit par le vrai Struct-Urb dans les tests : le format n’est vérifié que contre son propre écrivain.
+     Ajouter au moins un `.urb` réel (anonymisé) saisi dans `Struct-Urb.exe`, si possible avec un titre sur deux lignes,
+     pour fixer la façon dont `Input #` lit un titre multi-ligne (concaténation sans séparateur dans `OuvrirEtude`).
+- À corriger (non bloquant) :
+  3. Écrire avec `newline="
+"` explicitement (sinon LF hors Windows).
+  4. `num_index_structure` n’est relié à aucune structure. À la réouverture, le VB6 prend la **première** structure dont
+     `monNumIndex` correspond ; or le numéro 69 est porté par `Enrobés/GLg-T2` (position 34) **et** `Dalles/BC5` (position 66) :
+     une étude enregistrée sur ce `Dalles/BC5` se rouvre en VB6 sur `Enrobés/GLg-T2`. Si une fonction de réouverture est ajoutée,
+     s’appuyer plutôt sur `combo_struct_idx` ou signaler l’ambiguïté.
+  5. Note de calcul : elle affiche le tableau `monTabEp` (3 cm « d’affichage » pour une surface sans épaisseur, lit de pose)
+     sans nom de couche ni matériau. Pour un dossier, préférer les épaisseurs du catalogue, avec les couches et matériaux nommés.
+     Remplacer les formules LaTeX (`$I_{	ext{adm}}$`) par du texte simple.
+  6. Le README cite l’option `norme_2019`, qui n’existe que sur `gemini/lot-norme-2019` : fusionner cette branche d’abord.
+- Verdict : **À CORRIGER** (points 1 et 2).
+- Question pour YannFR81 : pouvez-vous fournir un ou deux fichiers `.urb` réels (anonymisés), avec un titre sur deux lignes ?
+
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-urb (Lot 7 : .urb, Note de calcul & README)
 - Fait :
   1. Lecture/écriture des fichiers d'étude `*.urb` (`structurb/urb.py`, exportée dans `structurb/__init__.py`) :
