@@ -16,6 +16,49 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture de gemini/charte-v1-calculs (72cdd2d), PR n° 5
+- Vérifié :
+  - `python -m pytest -q` : 219 réussis, 1 ignoré ; aucun test existant modifié (seul `tests/test_charte_v1_calculs.py` est ajouté).
+  - Trafic et durée : conformes à `VerifierMinMaxTraficIni` (refus hors du domaine toléré, acceptation dans la tolérance)
+    et à `VerifierMinMaxDuréeService` (5 à 50 ans). Bornes de `bornes_trafic_initial` relues : desserte 0–30,
+    distribution et giratoire distribution 20–170, trafic lourd et giratoire trafic lourd 120–1000, bus et parking 0–1000.
+  - PF1 en giratoire : conforme à `frmDocument.frm` (l. 2985-2989 : `OptionPF1.Enabled = False`, bascule en PF2).
+  - Giratoire, Q2 sans objet : les 48 grilles Q2 des structures giratoires sont entièrement à 0 dans `Certu.str` ; la note,
+    le résumé, le JSON et le DXF affichent « Q2 : sans objet (giratoire) » ; `gel_q2` vaut `None`.
+  - Règle `grille_vide` de `_resultat_qualite` : le VB6 ne décide « trouvée » que par `max_pratique` (`RechercherEpaisseur`,
+    l. 2756-2765). Contrôle exhaustif du catalogue : les 547 lignes vides hors giratoire ont toutes `max_pratique = Oui`
+    (déjà « non trouvée ») et les lignes vides de Q1 en giratoire avec `max_pratique = Non` sont toutes en PF1, désormais
+    refusée. Effet réel limité à Q2 en giratoire : aucun résultat atteignable ne change ailleurs.
+  - Grave-émulsion : aucun code modifié, seulement un test de fidélité (`a_gel = b_gel = 0`, IA = 17 sur ES/GE) : correct.
+  - Notice 2.1 : `trafic_cumule(MJA, 1, 20)` = 365 × MJA × 21,9 à 1 près pour les 7 valeurs : correct.
+- Remarques (non bloquantes, à reprendre dans une prochaine branche) :
+  1. `ne_hors_limite` change de sens : dans le VB6, « hors limite » ne veut dire que NE > 10 000 000 (`CalculerEtAfficherNE`,
+     l. 3993) ; un NE hors des bornes de la structure (inférieur au min **ou** supérieur au max) donne un simple message
+     et bloque la recherche d’épaisseur (`TrouverEpaisseurPossible`). Le correctif suit la charte (« ne_hors_limite = true
+     si NE > ne_max ») mais mélange les deux cas et ignore NE < ne_min. Proposition : garder `ne_hors_limite` pour
+     10 000 000 et ajouter `ne_hors_structure` (NE < min ou > max), avec un message distinct dans la note.
+  2. `grille_vide` : à restreindre à Q2 en giratoire (ou documenter), pour rester explicitement fidèle au critère VB6.
+  3. Page : `option[value='PF1']` ne trouve rien (les options n’ont pas d’attribut `value`) ; ça marche grâce au repli
+     `selPF.options[0]`. Ajouter `value` aux options ou chercher par texte.
+  4. Page : trafic minimum forcé à 1 en saisie alors que l’API (et le VB6) acceptent 0 en desserte, bus et parking.
+- Verdict : **BON POUR FUSION** de la part de Claude (remarques non bloquantes).
+- Question pour YannFR81 (grave-émulsion) : avis de Claude, garder la fidélité au VB6 par défaut ; des coefficients thermiques
+  de la NF P98-086 pour la GE ne se justifieraient que sous `norme_2019=True`, avec la valeur exacte de la norme et un test.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/charte-v1-calculs (§ 6 de CHARTE_V1.md)
+- Fait (un commit par point, tests écrits avant le code, aucun cas de référence existant modifié) :
+  1. Giratoires (`epaisseur.py`, `rapport.py`, `page.py`, `dxf.py`) : les grilles Q2 vides (toutes épaisseurs à 0 dans `Certu.str`) donnent `trouvee=False` et `couches=[]` dans le JSON (`donnees_note`) ; pas de choix Q1/Q2 en giratoire et affichage « Q2 : sans objet (giratoire) » dans la note HTML, le résumé et le DXF (`frmDocument.frm` l. 4127, `frmImprimer.frm` l. 653, `ModuleMain.bas :: AfficherCarottes` l. 1750-1751).
+  2. `PF1` refusée en giratoire (`etude.py :: dimensionner_etude`, `page.py`) : lève `ValueError` avec message clair et désactive `PF1` dans le formulaire HTML (`frmDocument.frm`, l. 2985-2989).
+  3. Plages de trafic et `ne_hors_limite` (`etude.py`, `rapport.py`, `page.py`) : vérifié `ModuleSaisie.bas :: VerifierMinMaxTraficIni` (l. 51-103) et `ModuleMain.bas :: DonnerMinMaxTraficIni` (l. 2183-2210) ; `dimensionner_etude` refuse tout trafic hors domaine toléré ; le formulaire HTML borne la saisie à `1–30` (desserte), `20–170` (distribution), `120–1000` (principale), `1–1000` (bus) ; `ne_hors_limite = True` dès que `NE > structure.nb_essieux_max`.
+  4. Durée de service 5 à 50 ans (`etude.py`, `page.py`) : validation `5 <= duree_ans <= 50` dans `dimensionner_etude`, `_calculer`, `OUTIL` et `<input id="champ-duree_ans">` (`ModuleSaisie.bas :: VerifierMinMaxDuréeService`, l. 105-125).
+  5. Valeurs par défaut (`page.py`) : `croissance_pct` à `1` % par défaut (HTML, API et schéma `OUTIL`), case `norme_2019` (`Kcr = 0,7`) décochée par défaut.
+  6. Grave-émulsion (`GE`) au gel (`test_charte_v1_calculs.py`) : vérifié dans `ModuleMain.bas :: CalculerIndiceGelAdm` (l. 2583-2641) et `Certu.str` / `Certu.mts` que `GE` vaut `a_gel=0,0`, `b_gel=0,0` sans exception VB6 ; sur `ES/GE` avec pente `0,5`, `IA = 17 °C·j` (uniquement `Qg`). Aucun calcul modifié.
+  7. Non-régression de la notice Struct-Urb 2.1 : `d = 20 ans`, `t = 1 %`, MJA `1/12/25/100/150/500/1000` (`NPL = 365 × MJA × 21,9`).
+- Vérifié : `python -m pytest -q` : **220 passed** (`tests/test_charte_v1_calculs.py` : 27 cas + 193 tests existants tous verts).
+- En suspens : néant.
+- À relire par Claude : ensemble de la branche `gemini/charte-v1-calculs` (7 commits + `NOTES_REVUE.md`).
+- Question pour YannFR81 : Dans `Certu.str`, la grave-émulsion (`GE`) a `a_gel = 0` et `b_gel = 0` (d’où `IA = 17 °C·j` sur `ES/GE` avec pente `0,5`, dû uniquement à `Qg`, exactement comme dans le VB6). Souhaitez-vous conserver cette fidélité au VB6, ou ajouter ultérieurement des coefficients thermiques NF P98-086 pour `GE` sous l’option `norme_2019=True` ?
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture de claude/charte-signature (b313d54 + fb6ce08), PR n° 4
 (Relecture transmise par YannFR81, reportée ici par Claude.)
 - Vérifié :

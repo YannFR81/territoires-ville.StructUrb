@@ -28,7 +28,7 @@ from .etude import TYPES_STRUCTURE, dimensionner_etude, structures_compatibles
 from .gel import HIVERS_REFERENCE, STATIONS_METEO, obtenir_station
 from .rapport import NOMS_VOIE, _json_script, donnees_note, note_calcul_html
 from .signature import signature_html
-from .trafic import TYPES_VOIE
+from .trafic import TYPES_VOIE, bornes_trafic_initial
 
 PYODIDE_VERSION = "0.26.4"
 PYODIDE_URL = f"https://cdn.jsdelivr.net/pyodide/v{PYODIDE_VERSION}/full/"
@@ -53,8 +53,8 @@ OUTIL: Dict[str, Any] = {
             "structure": {"type": "string", "description": "abrégé de la structure, si index absent (ex. « Pavés/GNT »)"},
             "type_voie": {"type": "string", "enum": list(TYPES_VOIE)},
             "trafic_initial_pl": {"type": "integer", "minimum": 0, "description": "poids lourds par jour"},
-            "croissance_pct": {"type": "integer", "minimum": 0, "maximum": 5, "default": 2},
-            "duree_ans": {"type": "integer", "minimum": 1, "default": 20},
+            "croissance_pct": {"type": "integer", "minimum": 0, "maximum": 5, "default": 1},
+            "duree_ans": {"type": "integer", "minimum": 5, "maximum": 50, "default": 20},
             "plate_forme": {"type": "string", "enum": list(PLATES_FORMES)},
             "station": {"type": "string", "description": "station météo (voir window.structurb.stations())"},
             "hiver": {"type": "string", "enum": list(HIVERS_REFERENCE), "default": "HRNE"},
@@ -198,8 +198,8 @@ def _calculer(p: dict, dossier: Path) -> dict:
     params = dict(
         type_voie=voie,
         trafic_initial_pl=_entier(p, "trafic_initial_pl", "Trafic initial", mini=0),
-        croissance_pct=_entier(p, "croissance_pct", "Taux de croissance", defaut=2, mini=0, maxi=5),
-        duree_ans=_entier(p, "duree_ans", "Durée de service", defaut=20, mini=1),
+        croissance_pct=_entier(p, "croissance_pct", "Taux de croissance", defaut=1, mini=0, maxi=5),
+        duree_ans=_entier(p, "duree_ans", "Durée de service", defaut=20, mini=5, maxi=50),
         plate_forme=pf,
         station=station,
         hiver=_choix(p, "hiver", "Hiver de référence", HIVERS_REFERENCE, defaut="HRNE"),
@@ -237,9 +237,13 @@ def _resume(d: dict) -> str:
         f"{d['structure']['abrege'].strip()} – NE {_nb(r['ne_equivalent'])}"
         + (f" (NE théorique {_nb(r['ne_theorique'])})" if r["ne_theorique"] else " – épaisseurs non trouvées"),
     ]
+    giratoire = d.get("entrees", {}).get("type_voie") in ("giratoire_distribution", "giratoire_trafic_lourd")
     for nom in ("q1", "q2"):
         q = r[nom]
         if q is None:
+            continue
+        if nom == "q2" and giratoire and not q["trouvee"]:
+            lignes.append("Q2 : sans objet (giratoire)")
             continue
         couches = " + ".join(f"{c['materiau']} {c['epaisseur_cm']}" for c in q["couches"] if c["epaisseur_cm"])
         lignes.append(f"{nom.upper()} : {couches} cm" if q["trouvee"] else f"{nom.upper()} : non trouvée")
@@ -264,7 +268,15 @@ def listes(dossier_catalogue: Optional[Union[str, Path]] = None) -> dict:
         for i, _ in structures_compatibles(cat, v):
             voies_par_index.setdefault(i, []).append(v)
     return {
-        "voies": [{"code": v, "nom": NOMS_VOIE.get(v, v)} for v in TYPES_VOIE],
+        "voies": [
+            {
+                "code": v,
+                "nom": NOMS_VOIE.get(v, v),
+                "trafic_min": max(1, bornes_trafic_initial(v)[0]),
+                "trafic_max": bornes_trafic_initial(v)[3],
+            }
+            for v in TYPES_VOIE
+        ],
         "structures": [
             {
                 "index": i,
@@ -663,8 +675,8 @@ footer.pied p { margin: 0; }
   <fieldset>
     <legend>Trafic</legend>
     <div class="champ"><label for="champ-trafic_initial_pl">Trafic initial (PL/j)</label><input id="champ-trafic_initial_pl" name="trafic_initial_pl" type="number" min="0" step="1" required value="12"></div>
-    <div class="champ"><label for="champ-croissance_pct">Taux de croissance (%)</label><input id="champ-croissance_pct" name="croissance_pct" type="number" min="0" max="5" step="1" value="2"></div>
-    <div class="champ"><label for="champ-duree_ans">Durée de service (ans)</label><input id="champ-duree_ans" name="duree_ans" type="number" min="1" step="1" value="20"></div>
+    <div class="champ"><label for="champ-croissance_pct">Taux de croissance (%)</label><input id="champ-croissance_pct" name="croissance_pct" type="number" min="0" max="5" step="1" value="1"></div>
+    <div class="champ"><label for="champ-duree_ans">Durée de service (ans)</label><input id="champ-duree_ans" name="duree_ans" type="number" min="5" max="50" step="1" value="20"></div>
     __AIDE_TRAFIC__
   </fieldset>
   <fieldset>
@@ -751,6 +763,18 @@ __DOCUMENTATION__
       selStruct.add(new Option(`${s.abrege.trim()} — ${s.famille}, NE ${nb(s.ne_min)} à ${nb(s.ne_max)}`, String(s.index)));
     }
     if ([...selStruct.options].some((o) => o.value === avant)) selStruct.value = avant;
+    const selPF = $("champ-plate_forme"), optPF1 = selPF.querySelector("option[value='PF1']") || selPF.options[0];
+    const gir = selVoie.value.startsWith("giratoire_");
+    if (optPF1) {
+      optPF1.disabled = gir;
+      if (gir && selPF.value === "PF1") selPF.value = "PF2";
+    }
+    const vInfo = LISTES.voies.find((v) => v.code === selVoie.value);
+    const chTraf = $("champ-trafic_initial_pl");
+    if (vInfo && chTraf) {
+      chTraf.min = String(vInfo.trafic_min);
+      chTraf.max = String(vInfo.trafic_max);
+    }
   }
   selVoie.addEventListener("change", remplirStructures);
   remplirStructures();

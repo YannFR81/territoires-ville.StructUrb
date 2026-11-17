@@ -188,17 +188,29 @@ def _json_script(d: object) -> str:
     return json.dumps(d, ensure_ascii=False, indent=1).replace("<", r"\u003c")
 
 
+def _est_giratoire(type_voie: str) -> bool:
+    """Indique si la voie est un giratoire (une seule qualité, pas de Q2 ; ``frmDocument.frm``, l. 4127)."""
+    return type_voie in ("giratoire_distribution", "giratoire_trafic_lourd")
+
+
 def donnees_note(
     r: ResultatEtude, structure: StructureChaussee, *, titre: str, variante: str, date: str, entrees: dict
 ) -> dict:
     """Bloc JSON (format ``structurb-note/1``) : entrées et résultats, pour les outils et les agents du navigateur."""
-    def qualite(q: ResultatQualite) -> dict:
-        return {
-            "trouvee": q.trouvee,
-            "couches": [
+    giratoire = _est_giratoire(str(entrees.get("type_voie") or ""))
+
+    def qualite(q: ResultatQualite, sans_objet: bool = False) -> dict:
+        couches = (
+            []
+            if sans_objet and not q.trouvee
+            else [
                 {"role": role, "rang": rang, "materiau": lib, "epaisseur_cm": ep}
                 for role, rang, lib, ep in _couches_detail(q.ligne, structure)
-            ],
+            ]
+        )
+        return {
+            "trouvee": q.trouvee,
+            "couches": couches,
             "qm": round(q.qm, 4),
             "minimum_technologique": q.min_technique.strip().upper() == "OUI",
             "maximum_pratique": q.max_pratique.strip().upper() == "OUI",
@@ -236,7 +248,7 @@ def donnees_note(
             "etude_labo_conseillee": r.etude_labo,
             "ne_theorique": None if ep is None else ep.ne_theorique,
             "q1": None if ep is None else qualite(ep.q1),
-            "q2": None if ep is None else qualite(ep.q2),
+            "q2": None if ep is None else qualite(ep.q2, sans_objet=giratoire),
             "gel": gel,
         },
     }
@@ -292,7 +304,7 @@ def note_calcul_html(
     ]
     alertes = []
     if r.ne_hors_limite:
-        alertes.append("NE supérieur à 10 000 000 : hors du domaine de Struct-Urb.")
+        alertes.append("NE supérieur au maximum de la structure ou à 10 000 000 : hors du domaine de Struct-Urb.")
     if r.etude_labo:
         alertes.append("Trafic élevé : une étude en laboratoire est conseillée.")
 
@@ -329,8 +341,13 @@ def note_calcul_html(
             f"{_nombre(ep.ne_theorique)}</strong> (palier immédiatement supérieur ou égal au NE).</p>"
         )
         parties.append('<div class="coupes">')
-        parties.append(_bloc_qualite("Qualité Q1 (chantier courant)", ep.q1, structure))
-        parties.append(_bloc_qualite("Qualité Q2 (chantier difficile)", ep.q2, structure))
+        if _est_giratoire(type_voie):
+            # Réf. VB6 : frmDocument.frm (l. 4127) et frmImprimer.frm (l. 653) : pas de choix Q1/Q2 en giratoire
+            parties.append(_bloc_qualite("Structure retenue (giratoire)", ep.q1, structure))
+            parties.append('<div class="coupe"><h3>Qualité Q2</h3><p class="note">Q2 : sans objet (giratoire).</p></div>')
+        else:
+            parties.append(_bloc_qualite("Qualité Q1 (chantier courant)", ep.q1, structure))
+            parties.append(_bloc_qualite("Qualité Q2 (chantier difficile)", ep.q2, structure))
         parties.append("</div>")
 
     parties.append("</section>")
