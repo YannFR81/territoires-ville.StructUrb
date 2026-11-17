@@ -193,3 +193,27 @@ def test_duree_service_bornes_5_50_acceptees(catalogues, tmp_path):
     generer_page(f, dossier_catalogue=REPO_ROOT)
     html = f.read_text(encoding="utf-8")
     assert 'id="champ-duree_ans" name="duree_ans" type="number" min="5" max="50"' in html
+
+
+# --- 5. Valeurs par défaut : croissance 1 %, Kcr 0,7 décochée ---------------
+
+def test_valeurs_par_defaut_croissance_1_et_norme_2019_false(tmp_path):
+    from structurb.page import OUTIL, generer_page
+    assert OUTIL["inputSchema"]["properties"]["croissance_pct"]["default"] == 1
+    assert OUTIL["inputSchema"]["properties"]["norme_2019"]["default"] is False
+
+    r = json.loads(calculer_depuis_json(json.dumps({
+        "index": 49,
+        "type_voie": "desserte",
+        "trafic_initial_pl": 12,
+        "plate_forme": "PF2",
+    }), dossier_catalogue=REPO_ROOT))
+    assert r["ok"] is True
+    assert r["donnees"]["entrees"]["croissance_pct"] == 1
+    assert r["donnees"]["entrees"]["norme_2019"] is False
+
+    f = tmp_path / "page.html"
+    generer_page(f, dossier_catalogue=REPO_ROOT)
+    html = f.read_text(encoding="utf-8")
+    assert 'id="champ-croissance_pct" name="croissance_pct" type="number" min="0" max="5" step="1" value="1"' in html
+    assert '<input id="champ-norme_2019" name="norme_2019" type="checkbox">' in html
