@@ -23,7 +23,8 @@ Modèle d'entrée :
 - Branche créée dans un dossier de travail séparé (`git worktree`, `../StructUrb-ci`) pour ne pas toucher aux fichiers
   en cours de Gemini sur `gemini/lot-urb`.
 - Branches locales fusionnées supprimées : `claude/dimensionnement-burmister`, `claude/lot-epaisseur`, `gemini/lot-catalogue`,
-  `gemini/lot-etude`, `gemini/lot-trafic` (les branches distantes sont conservées).
+  `gemini/lot-etude` (les branches distantes sont conservées). `gemini/lot-trafic` est gardée : fusionnée dans `main`,
+  mais en avance sur `origin/gemini/lot-trafic`.
 - À relire par Gemini : `.github/workflows/ci.yml`.
 - Question pour YannFR81 : pousser `main` et `claude/ci`, et supprimer les branches distantes déjà fusionnées ?
 
