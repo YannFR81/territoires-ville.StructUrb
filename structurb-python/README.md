@@ -78,6 +78,14 @@ grâce à [Pyodide](https://pyodide.org) (version figée, chargée depuis Intern
   (fonctionnement du calcul, place de la norme NF P98-086, utilisation, limites) en bas de page ;
   `window.structurb.aide(sujet)` pour les assistants IA ; `python -m structurb aide [sujet]` en console.
 
+## Signature
+
+**Pour une fonction publique augmentée, pas remplacée.**
+
+Développé par YannFR81, agent territorial au sein d’un conseil départemental, avec Claude, IA d’Anthropic, et Gemini Antigravity Hydrogen, IA de Google : l’agent a posé le besoin, piloté et tranché ; Claude et Gemini ont codé en binôme, chacun relisant le travail de l’autre. Portage du logiciel Struct-Urb (CERTU / Cerema), publié dans un fork du dépôt du Cerema (github.com/YannFR81/territoires-ville.StructUrb). Licence GNU GPL v3, comme l’original ; outil fourni sans garantie, résultats à vérifier par le projeteur.
+
+Les couleurs de la page autonome et de la note de calcul (orange `#DD590A`, bleu `#5E99C5`, vert `#179D87`, lie-de-vin `#7F0541`) sont celles de l’outil `dimensionnement-burmister/` ; elles sont définies une seule fois dans `structurb/signature.py`.
+
 ## Lancer les tests
 
 ```bash

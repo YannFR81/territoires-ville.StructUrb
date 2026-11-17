@@ -16,6 +16,7 @@ from .catalogue import LigneEpaisseur, StructureChaussee
 from .epaisseur import EP_LIT_POSE, ResultatQualite
 from .etude import ResultatEtude
 from .gel import HORS_GEL, StationMeteo
+from .signature import signature_html
 
 NOMS_VOIE = {
     "desserte": "Voie de desserte",
@@ -47,8 +48,8 @@ _CSS = """
 * { box-sizing: border-box; }
 body { font-family: "Segoe UI", Arial, sans-serif; color: #1d2330; background: #fff;
        margin: 0 auto; max-width: 820px; padding: 24px 16px; line-height: 1.45; font-size: 14px; }
-h1 { font-size: 22px; margin: 0 0 4px; }
-h2 { font-size: 16px; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #1d2330; }
+h1 { font-size: 22px; margin: 0 0 4px; color: #7F0541; }
+h2 { font-size: 16px; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #DD590A; }
 .sous-titre { color: #555d6e; margin: 0 0 12px; }
 table { border-collapse: collapse; width: 100%; }
 th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #dde1e8; vertical-align: top; }
@@ -57,10 +58,11 @@ th { width: 45%; font-weight: 600; color: #39404f; }
 .coupes { display: flex; gap: 24px; flex-wrap: wrap; }
 .coupe { flex: 1 1 340px; border: 1px solid #dde1e8; border-radius: 6px; padding: 10px 12px; break-inside: avoid; }
 .coupe h3 { font-size: 14px; margin: 0 0 6px; }
-.ok { color: #1a7f37; font-weight: 600; }
+.ok { color: #0e6b5b; font-weight: 600; }
 .ko { color: #b42318; font-weight: 600; }
 .note { color: #555d6e; font-size: 12px; }
-.alerte { background: #fff4e5; border-left: 4px solid #d97706; padding: 6px 10px; margin: 8px 0; }
+.signature { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dde1e8; color: #555d6e; font-size: 12px; }
+.alerte { background: #fff4e5; border-left: 4px solid #DD590A; padding: 6px 10px; margin: 8px 0; }
 svg text { font-family: inherit; font-size: 11px; }
 @page { size: A4; margin: 15mm; }
 @media print {
@@ -351,6 +353,7 @@ def note_calcul_html(
     parties.append(f'<script type="application/json" id="structurb-donnees">{donnees}</script>')
     parties.append(
         '<p class="note">Note produite par structurb (portage Python de Struct-Urb, CERTU / Cerema, '
-        "licence GPL v3). Résultats à vérifier par le projeteur.</p></body></html>"
+        "licence GPL v3). Résultats à vérifier par le projeteur.</p>"
     )
+    parties.append(signature_html() + "</body></html>")
     return "\n".join(p for p in parties if p)

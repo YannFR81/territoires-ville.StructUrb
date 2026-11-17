@@ -27,6 +27,7 @@ from .epaisseur import PLATES_FORMES
 from .etude import TYPES_STRUCTURE, dimensionner_etude, structures_compatibles
 from .gel import HIVERS_REFERENCE, STATIONS_METEO, obtenir_station
 from .rapport import NOMS_VOIE, _json_script, donnees_note, note_calcul_html
+from .signature import signature_html
 from .trafic import TYPES_VOIE
 
 PYODIDE_VERSION = "0.26.4"
@@ -338,9 +339,10 @@ def generer_page(chemin: Union[str, Path], dossier_catalogue: Optional[Union[str
         "LISTES": _json_script(listes(d)),
         "OUTIL": _json_script(OUTIL),
         **_fragments_aide(d),
+        "SIGNATURE": signature_html(),
     }
     # Une seule passe : le texte inséré (dont les sources de ce module) n’est pas relu
-    html = re.sub(r"__(PYODIDE_URL|FICHIERS|LISTES|OUTIL|AIDE_VOIE|AIDE_TRAFIC|AIDE_GEL|DOCUMENTATION|AIDE_JSON)__", lambda m: valeurs[m.group(1)], _GABARIT)
+    html = re.sub(r"__(PYODIDE_URL|FICHIERS|LISTES|OUTIL|AIDE_VOIE|AIDE_TRAFIC|AIDE_GEL|DOCUMENTATION|AIDE_JSON|SIGNATURE)__", lambda m: valeurs[m.group(1)], _GABARIT)
     Path(chemin).write_text(html, encoding="utf-8")
 
 
@@ -360,11 +362,17 @@ _GABARIT = r"""<!doctype html>
   --doux: #475569;
   --bord: #cbd5e1;
   --bord-doux: #e2e8f0;
-  --accent: #1d4ed8;
-  --accent-fonce: #1e40af;
-  --accent-doux: rgba(29, 78, 216, .10);
-  --ok: #15803d;
-  --ok-fond: #dcfce7;
+  /* Palette du fork (identique à dimensionnement-burmister/web) : orange, bleu, vert, lie-de-vin */
+  --orange: #DD590A;
+  --bleu: #5E99C5;
+  --vert: #179D87;
+  --lie-de-vin: #7F0541;
+  --accent: var(--orange);
+  --accent-fonce: #b8480a;
+  --accent-texte: #a8430a;
+  --accent-doux: rgba(221, 89, 10, .10);
+  --ok: var(--vert);
+  --ok-fond: #e6f5f2;
   --ko: #b91c1c;
   --ko-fond: #fee2e2;
   --zone: #f8fafc;
@@ -378,11 +386,13 @@ _GABARIT = r"""<!doctype html>
     --doux: #94a3b8;
     --bord: #334155;
     --bord-doux: #1e293b;
-    --accent: #60a5fa;
-    --accent-fonce: #3b82f6;
-    --accent-doux: rgba(96, 165, 250, .14);
-    --ok: #4ade80;
-    --ok-fond: rgba(34, 197, 94, .14);
+    --accent: #e8702a;
+    --accent-fonce: #DD590A;
+    --accent-texte: #f5a26b;
+    --accent-doux: rgba(232, 112, 42, .16);
+    --bleu: #8bb8dc;
+    --ok: #3cc4ac;
+    --ok-fond: rgba(23, 157, 135, .16);
     --ko: #f87171;
     --ko-fond: rgba(239, 68, 68, .14);
     --zone: #0f172a;
@@ -393,12 +403,12 @@ _GABARIT = r"""<!doctype html>
 body { margin: 0; background: var(--fond); color: var(--texte); font: 15px/1.5 "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
 main { max-width: 1140px; margin: 0 auto; padding: 24px 18px 56px; }
 .hero {
-  background: linear-gradient(135deg, #0f294a 0%, #1d4ed8 65%, #0284c7 100%);
+  background: linear-gradient(135deg, var(--lie-de-vin) 0%, var(--orange) 72%);
   color: #fff;
   border-radius: 14px;
   padding: 22px 24px 20px;
   margin-bottom: 18px;
-  box-shadow: 0 10px 28px rgba(15, 41, 74, .22);
+  box-shadow: 0 10px 28px rgba(127, 5, 65, .22);
 }
 .hero-haut { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .badge {
@@ -421,7 +431,7 @@ h1 { font-size: 25px; margin: 0; letter-spacing: -.01em; }
   gap: 8px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, .32);
+  background: rgba(60, 0, 30, .30);
   border: 1px solid rgba(255, 255, 255, .22);
   color: #f8fafc;
   font-size: 13px;
@@ -451,7 +461,7 @@ fieldset {
 legend {
   font-weight: 700;
   font-size: 14px;
-  color: var(--accent);
+  color: var(--accent-texte);
   background: var(--carte);
   border: 1px solid var(--bord-doux);
   border-radius: 999px;
@@ -473,11 +483,11 @@ input, select {
 }
 input:focus, select:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-texte);
   background: var(--carte);
   box-shadow: 0 0 0 3px var(--accent-doux);
 }
-input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent-texte); cursor: pointer; }
 .actions {
   grid-column: 1 / -1;
   display: flex;
@@ -503,7 +513,7 @@ button, .bouton {
   transition: transform .12s ease, box-shadow .15s ease, opacity .15s ease;
 }
 button:hover:not(:disabled), .bouton:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--accent-doux); }
-.bouton.second { background: var(--carte); color: var(--accent); }
+.bouton.second { background: var(--carte); color: var(--accent-texte); }
 .bouton.second:hover { background: var(--accent-doux); }
 button:disabled { opacity: .55; cursor: wait; transform: none; }
 #resultat { margin-top: 22px; }
@@ -531,20 +541,20 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
 details.aide {
   margin: 0 0 18px;
   border: 1px solid var(--bord-doux);
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--bleu);
   border-radius: 12px;
   background: var(--carte);
   padding: 12px 16px;
   box-shadow: var(--ombre);
 }
-details.aide summary { cursor: pointer; font-weight: 700; color: var(--accent); }
+details.aide summary { cursor: pointer; font-weight: 700; color: var(--accent-texte); }
 .aide-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 12px; margin-top: 12px; font-size: 13px; }
 .aide-grille > div { background: var(--zone); border: 1px solid var(--bord-doux); border-radius: 8px; padding: 10px 12px; }
-.aide-grille h3 { font-size: 13.5px; margin: 0 0 6px; color: var(--accent); border-bottom: 1px solid var(--bord-doux); padding-bottom: 4px; }
+.aide-grille h3 { font-size: 13.5px; margin: 0 0 6px; color: var(--accent-texte); border-bottom: 1px solid var(--bord-doux); padding-bottom: 4px; }
 .aide-grille ul { margin: 0; padding-left: 18px; }
 .aide-grille li { margin-bottom: 4px; }
 .aide-rubrique { grid-column: 1 / -1; margin-top: 8px; font-size: 12.5px; background: var(--zone); border: 1px solid var(--bord-doux); border-radius: 8px; padding: 6px 10px; }
-.aide-rubrique summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.aide-rubrique summary { cursor: pointer; font-weight: 600; color: var(--accent-texte); }
 .aide-rubrique p, .doc p { margin: 6px 0; }
 #documentation { margin-top: 30px; }
 #documentation h2 { font-size: 18px; border-bottom: 2px solid var(--bord); padding-bottom: 6px; margin-bottom: 12px; }
@@ -557,8 +567,10 @@ details.doc {
   box-shadow: var(--ombre);
 }
 details.doc summary { cursor: pointer; font-weight: 600; color: var(--texte); }
-details.doc code, details.aide code { background: var(--accent-doux); color: var(--accent); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+details.doc code, details.aide code { background: var(--accent-doux); color: var(--accent-texte); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
 .aide-champ { grid-column: 1 / -1; font-size: 12px; color: var(--doux); margin: 6px 0 0; }
+footer.pied { margin-top: 34px; padding-top: 12px; border-top: 2px solid var(--orange); font-size: 12.5px; color: var(--doux); }
+footer.pied p { margin: 0; }
 @media (max-width: 600px) {
   .champ { grid-template-columns: 1fr; gap: 4px; }
   .hero { padding: 18px 16px; }
@@ -667,6 +679,7 @@ details.doc code, details.aide code { background: var(--accent-doux); color: var
   <iframe id="resultat-note" title="Note de calcul" sandbox="" hidden></iframe>
 </section>
 __DOCUMENTATION__
+<footer class="pied">__SIGNATURE__</footer>
 </main>
 
 <script type="application/json" id="structurb-fichiers">__FICHIERS__</script>

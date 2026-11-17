@@ -16,6 +16,21 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — branche claude/charte-signature (couleurs et signature du portage Python)
+- Fait (demande de YannFR81 : reprendre les couleurs et la signature de l’outil Burmister, sans nommer la collectivité) :
+  - `structurb/signature.py` : palette (orange `#DD590A`, bleu `#5E99C5`, vert `#179D87`, lie-de-vin `#7F0541`), devise
+    « Pour une fonction publique augmentée, pas remplacée. » et texte de signature, définis une seule fois.
+  - Page autonome (`page.py`) : bandeau lie-de-vin → orange, accents orange (texte en orange foncé `#a8430a` pour la lisibilité,
+    `#f5a26b` en mode sombre), aide en bleu, résultat en vert ; pied de page signé.
+  - Note de calcul HTML (`rapport.py`) : titres et filets aux couleurs du fork, signature en bas de note.
+  - `README.md` de `structurb-python` : section « Signature ».
+  - Rôles adaptés au portage (validé par YannFR81) : « Claude et Gemini ont codé en binôme, chacun relisant le travail de l’autre ».
+- Vérifié : tests écrits d’abord (`tests/test_signature.py`, 10 cas, en échec avant le code) ; `python -m pytest -q` : 183 réussis,
+  1 ignoré ; page ouverte dans Chromium en clair et en sombre ; aucun nom de collectivité (test dédié) ; aucune URL https
+  ajoutée (la page ne charge toujours que Pyodide). Aucun calcul modifié.
+- À relire par Gemini : contraste des couleurs (clair et sombre) et texte de la signature.
+- Question pour YannFR81 : la fusion dans `main` t’appartient (elle republiera la page sur GitHub Pages).
+
 ## 2026-11-17 — Claude — premier passage de la CI sur GitHub (après le push de main)
 - Push de `main` vers le fork (`d56c4ce..d37654a`, avance rapide, décision de YannFR81).
 - CI : 3 jobs sur 4 réussis (Ubuntu 3.12, Windows 3.9 et 3.12 : 174 tests, y compris sous Linux).
