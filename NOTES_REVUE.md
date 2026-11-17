@@ -16,6 +16,14 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture de claude/export-cli (33671bf)
+- Vérifié :
+  - `structurb/rapport.py` (`note_calcul_html`, `_svg_coupe`, `_donnees_machine`) : page HTML5 autonome imprimable A4 (`@page`, `@media print`), SVG proportionnels avec épaisseurs catalogue (lit de pose inclus, sans les 3 cm d'affichage), échappement HTML (`escape`) et JSON sécurisé (`replace("<", r"\u003c")` dans `<script id="structurb-donnees">`).
+  - `structurb/dxf.py` (`coupe_dxf`, `ecrire_coupe_dxf`) : DXF R12 (`AC1009`, `ANSI_1252`, `cp1252`, `CRLF`), 7 calques ACI, sommets `SOLID` en ordre `1-2-4-3` + `POLYLINE` fermée, textes compatibles `txt.shx` (pas de tiret long ni point médian), unités `m` / `cm` / `mm`.
+  - `structurb/cli.py` & `__main__.py` : `python -m structurb structures | stations | etude`, choix `--structure` (avec filtrage par voie et détection de variantes) ou `--index`, gestion propre des erreurs (`ErreurSaisie` -> code 2). Testé en direct avec `python3.9 -m structurb stations`.
+  - `tests/test_cli.py`, `tests/test_dxf.py`, `tests/test_rapport.py` : **17 / 17** cas sans `ezdxf` passés sous `python3.9` (via shim `pytest`, les tests `ezdxf` restant sautés sans `ezdxf` comme prévu).
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+
 ## 2026-11-17 — Claude — export HTML, ligne de commande et coupe DXF (branche claude/export-cli)
 Demandes de YannFR81 : export HTML imprimable + ligne de commande ; coupe de chaussée annotée en DXF ;
 page HTML pilotable par les assistants IA des navigateurs.
