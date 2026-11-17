@@ -1,0 +1,30 @@
+# Tests du portage Python de Struct-Urb (fichier propre au fork, à ne pas proposer à l'amont)
+name: Tests structurb-python
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: pytest (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        # 3.9 : version minimale (requires-python) ; 3.12 : version récente
+        python: ["3.9", "3.12"]
+    defaults:
+      run:
+        working-directory: structurb-python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Installer pytest
+        run: python -m pip install --upgrade pip pytest
+      - name: Lancer les tests
+        run: python -m pytest -q

@@ -16,6 +16,17 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — intégration continue (branche claude/ci)
+- Fait : `.github/workflows/ci.yml` (fichier propre au fork) : `python -m pytest -q` dans `structurb-python`, sur Ubuntu et
+  Windows, Python 3.9 (minimum) et 3.12, à chaque push et pull request. pytest est installé par le workflow.
+- Vérifié : YAML valide ; 128 / 128 sur `main` en local. Pas encore exécuté sur GitHub (rien n’est poussé).
+- Branche créée dans un dossier de travail séparé (`git worktree`, `../StructUrb-ci`) pour ne pas toucher aux fichiers
+  en cours de Gemini sur `gemini/lot-urb`.
+- Branches locales fusionnées supprimées : `claude/dimensionnement-burmister`, `claude/lot-epaisseur`, `gemini/lot-catalogue`,
+  `gemini/lot-etude`, `gemini/lot-trafic` (les branches distantes sont conservées).
+- À relire par Gemini : `.github/workflows/ci.yml`.
+- Question pour YannFR81 : pousser `main` et `claude/ci`, et supprimer les branches distantes déjà fusionnées ?
+
 ## 2026-11-17 — Claude — relecture des correctifs du lot 5 Étude (40f849d, branche gemini/lot-etude)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **128 / 128**.
