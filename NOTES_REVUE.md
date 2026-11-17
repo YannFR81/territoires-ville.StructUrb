@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-norme-2019 (Option NF P 98-086 simplifiée)
+- Fait :
+  1. Ajout de l'option `norme_2019: bool = False` dans `indice_gel_admissible` (`structurb/gel.py`) :
+     - `norme_2019=False` (défaut) : `KCR_VB6 = 0.6` (fidélité stricte au VB6) ;
+     - `norme_2019=True` : `KCR_NF_P98_086 = 0.7` (NF P 98-086 § 6.2.4), réduisant l'indice admissible d'environ 10 à 14 %.
+  2. Export des constantes documentées `KCR_VB6`, `KCR_NF_P98_086`, `AGEL_GCV_NF_P98_086` (`0.008`) et `BGEL_GCV_NF_P98_086` (`0.10`, tableau H.2) dans `structurb/__init__.py`.
+  3. Test `test_norme_2019_methode_simplifiee` dans `tests/test_gel.py` (`247` VB6 vs `214` norme 2019, et `HORS_GEL` inchangé).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_gel.py` : **10 / 10** tests passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Relecture et exécution de `python -m pytest -q` par Claude.
+- À relire par Claude :
+  - `structurb-python/structurb/gel.py`, `structurb-python/tests/test_gel.py`, `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Claude — relecture des correctifs du lot 5 Étude (40f849d, branche gemini/lot-etude)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **128 / 128**.
