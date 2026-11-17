@@ -4,7 +4,11 @@ import math
 import pytest
 
 from structurb.gel import (
+    AGEL_GCV_NF_P98_086,
+    BGEL_GCV_NF_P98_086,
     HORS_GEL,
+    KCR_NF_P98_086,
+    KCR_VB6,
     STATIONS_METEO,
     chaussee_verifiee_au_gel,
     coef_couche_forme_non_gelive,
@@ -150,3 +154,30 @@ def test_indice_gel_personnel():
         indice_gel_reference("Toulouse", "HRNE", "moyenne", indice_personnel=12.5)
     with pytest.raises(ValueError):
         indice_gel_reference("Toulouse", "HRNE", "moyenne", indice_personnel=True)
+
+
+def test_norme_2019_methode_simplifiee():
+    assert KCR_VB6 == pytest.approx(0.6)
+    assert KCR_NF_P98_086 == pytest.approx(0.7)
+    assert AGEL_GCV_NF_P98_086 == pytest.approx(0.008)
+    assert BGEL_GCV_NF_P98_086 == pytest.approx(0.10)
+
+    # Meme cas que test_indice_gel_admissible_calcul :
+    # 10 + 11.936^2 / 0.6 = 247 (VB6) vs 10 + 11.936^2 / 0.7 = 213.525... -> 214 (NF P 98-086 § 6.2.4)
+    kw = dict(
+        epaisseurs_cm=(6, 0, 20, 0, 0, 0),
+        agel=(0.01, 0.02, 0.0),
+        bgel=(0.05, 0.10, 0.0),
+        qm=3.0,
+        epaisseur_non_gelive_cm=20.0,
+        couche_forme_traitee=False,
+        pente_sol_pourcent=0.5,
+    )
+    i_vb6 = indice_gel_admissible(**kw)
+    i_2019 = indice_gel_admissible(**kw, norme_2019=True)
+    assert i_vb6 == 247
+    assert i_2019 == 214
+    assert i_2019 < i_vb6
+
+    # Cas HORS_GEL inchange meme avec norme_2019=True
+    assert indice_gel_admissible(**{**kw, "pente_sol_pourcent": 0.05}, norme_2019=True) == HORS_GEL

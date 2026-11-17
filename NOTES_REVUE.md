@@ -16,6 +16,69 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture des correctifs de l’option norme 2019 (078347d, branche gemini/lot-norme-2019)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **130 / 130**.
+  - Points 1 et 2 : `dimensionner_etude(..., norme_2019=True)` transmet Kcr = 0,7 et remplace les coefficients GCV
+    (0,008 / 0,10) en couche de base (`Enrobés/GCV`) comme en fondation (`Enrobés/GB3/GCV`, ` Enrobés /GB3/GCV`).
+    Contrôle indépendant sur `Enrobés/GCV` (distribution, 50 PL/j, PF2, pente 0,5) : I_adm **90** (VB6), **78** (Kcr seul),
+    **60** (Kcr + GCV) : la substitution GCV a bien un effet propre.
+  - Points 3 et 4 : périmètre de la méthode simplifiée documenté ; unités notées.
+- Remarque (non bloquante) : `test_dimensionner_etude_norme_2019_gcv` vérifie seulement que l’indice 2019 est plus bas,
+  ce que Kcr suffit à produire ; il passerait même sans la substitution GCV. Ajouter une valeur attendue (60) ou comparer
+  à un cas sans GCV.
+- Verdict : **BON POUR FUSION** de la part de Claude. À fusionner **avant** `gemini/lot-urb` (le README cite l’option).
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-norme-2019 (correctifs relecture Claude)
+- Fait :
+  1. `dimensionner_etude` (`structurb/etude.py`) : ajout du paramètre `norme_2019: bool = False`, transmis à `_coefs_gel_structure` et `indice_gel_admissible`.
+  2. `_coefs_gel_structure` : lorsque `norme_2019=True`, les couches `GCV` utilisent `AGEL_GCV_NF_P98_086` (`0.008` cm⁻¹) et `BGEL_GCV_NF_P98_086` (`0.10`).
+  3. Docstring de `indice_gel_admissible` (`structurb/gel.py`) : précision que `norme_2019=True` couvre uniquement la méthode simplifiée (annexe H.3), en excluant le coefficient A (12 à 17, tableau C.9), le sol de type c et la méthode normalisée (modèle thermique).
+  4. `tests/test_etude.py` : ajout de `test_dimensionner_etude_norme_2019_gcv` sur `Enrobés/GCV` (`norme_2019=True` vs `False`).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_gel.py` (**10 / 10**) et `tests/test_etude.py` (**7 / 7**) passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Contre-relecture et lancement complet `python -m pytest -q` par Claude.
+- À relire par Claude :
+  - `structurb-python/structurb/etude.py`, `structurb-python/structurb/gel.py`, `structurb-python/tests/test_etude.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
+## 2026-11-17 — Claude — relecture de l’option norme 2019 (34ecbc4, branche gemini/lot-norme-2019)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **129 / 129**.
+  - `indice_gel_admissible(..., norme_2019=False)` : division par 0,6 comme le VB6 (même littéral `Double`) ; résultats
+    existants inchangés. `norme_2019=True` : Kcr = 0,7 (§ 6.2.4). Cas 247 → 214 recalculé : exact. `HORS_GEL` inchangé.
+- **À corriger (bloquant)** :
+  1. Les constantes `AGEL_GCV_NF_P98_086` / `BGEL_GCV_NF_P98_086` sont exportées mais **jamais utilisées** : avec
+     `norme_2019=True`, les 3 structures à GCV (`Enrobés/GCV`, `Enrobés/GB3/GCV`, ` Enrobés /GB3/GCV`) gardent les coefficients
+     du catalogue (0,012 / 0,13). L’option annoncée « norme 2019 » n’est donc que partielle.
+  2. `dimensionner_etude` (`etude.py`) n’a pas de paramètre `norme_2019` : l’option est inaccessible depuis l’étude complète.
+     Ajouter le paramètre, le transmettre à `indice_gel_admissible`, et remplacer les coefficients GCV dans `_coefs_gel_structure`
+     quand l’option est active. Test : une structure à GCV, avec et sans option.
+- À corriger (non bloquant) :
+  3. Docstring : préciser que l’option ne couvre que la méthode simplifiée (annexe H.3, pré-dimensionnement) ; restent hors
+     périmètre le coefficient A de 12 à 17 (tableau C.9), le sol de type c et la méthode normalisée (modèle thermique).
+  4. Unités : les constantes GCV sont en cm⁻¹ (0,008 / 0,10), le tableau H.2 en m⁻¹ (0,8 / 10) ; le commentaire le dit, à garder.
+- Verdict : **À CORRIGER** (points 1 et 2).
+- Question pour YannFR81 : aucune.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-norme-2019 (Option NF P 98-086 simplifiée)
+- Fait :
+  1. Ajout de l'option `norme_2019: bool = False` dans `indice_gel_admissible` (`structurb/gel.py`) :
+     - `norme_2019=False` (défaut) : `KCR_VB6 = 0.6` (fidélité stricte au VB6) ;
+     - `norme_2019=True` : `KCR_NF_P98_086 = 0.7` (NF P 98-086 § 6.2.4), réduisant l'indice admissible d'environ 10 à 14 %.
+  2. Export des constantes documentées `KCR_VB6`, `KCR_NF_P98_086`, `AGEL_GCV_NF_P98_086` (`0.008`) et `BGEL_GCV_NF_P98_086` (`0.10`, tableau H.2) dans `structurb/__init__.py`.
+  3. Test `test_norme_2019_methode_simplifiee` dans `tests/test_gel.py` (`247` VB6 vs `214` norme 2019, et `HORS_GEL` inchangé).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_gel.py` : **10 / 10** tests passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Relecture et exécution de `python -m pytest -q` par Claude.
+- À relire par Claude :
+  - `structurb-python/structurb/gel.py`, `structurb-python/tests/test_gel.py`, `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Claude — relecture des correctifs du lot 5 Étude (40f849d, branche gemini/lot-etude)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **128 / 128**.

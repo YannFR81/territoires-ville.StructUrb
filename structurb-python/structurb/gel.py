@@ -35,6 +35,14 @@ COEFFICIENTS_AGGLO: dict[str, float] = {
 COEF_A_NON_TRAITEE: float = 0.12
 COEF_A_TRAITEE: float = 0.14
 
+# Passage à l'indice de gel atmosphérique Kcr (NF P 98-086 § 6.2.4 vs VB6)
+KCR_VB6: float = 0.6
+KCR_NF_P98_086: float = 0.7
+
+# Coefficients de gel de la GCV selon le tableau H.2 de la NF P 98-086 (2019) (en cm^-1)
+AGEL_GCV_NF_P98_086: float = 0.008
+BGEL_GCV_NF_P98_086: float = 0.10
+
 
 @dataclass(frozen=True)
 class StationMeteo:
@@ -270,6 +278,7 @@ def indice_gel_admissible(
     epaisseur_non_gelive_cm: float = 0.0,
     couche_forme_traitee: bool = False,
     pente_sol_pourcent: Optional[float] = None,
+    norme_2019: bool = False,
 ) -> int:
     """Calcule l'indice de gel admissible (en °C·j) pour une qualité de chaussée.
 
@@ -284,6 +293,11 @@ def indice_gel_admissible(
     - ``pente_sol_pourcent`` : pente de gélivité du sol support ; si ``<= 0.05`` (en ``Double``,
       et finie), retourne ``HORS_GEL`` (1 000 000 000). Si ``None``, retourne ``0`` (inconnu).
       Si ``math.inf`` (``MsgInfinie``, très gélif), le calcul utilise ``Qg = 0``.
+    - ``norme_2019`` : ``False`` (défaut, ``Kcr = 0.6`` fidèle au VB6) ou ``True``
+      (méthode simplifiée de l'annexe H.3 de la NF P 98-086, pré-dimensionnement,
+      ``Kcr = 0.7``). Restent hors périmètre : le coefficient ``A`` de 12 à 17
+      (tableau C.9), le sol « peu gélif sur très gélif » (type c) et la méthode
+      normalisée (modèle thermique).
 
     Réf. VB6 : ``ModuleMain.bas :: CalculerIndiceGelAdm`` (lignes 2537-2642).
     """
@@ -308,7 +322,8 @@ def indice_gel_admissible(
     q_tot = _vb_csng(_vb_csng(qm) + qng + qg)
 
     terme = _vb_csng(_vb_csng(ah * q_tot) + bh)
-    i_adm = 10.0 + _vb_csng(terme * terme) / 0.6
+    kcr = KCR_NF_P98_086 if norme_2019 else KCR_VB6
+    i_adm = 10.0 + _vb_csng(terme * terme) / kcr
     return vb_clng(i_adm)
 
 

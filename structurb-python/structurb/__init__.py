@@ -35,11 +35,15 @@ from .etude import (
     structures_compatibles,
 )
 from .gel import (
+    AGEL_GCV_NF_P98_086,
+    BGEL_GCV_NF_P98_086,
     COEF_A_NON_TRAITEE,
     COEF_A_TRAITEE,
     COEFFICIENTS_AGGLO,
     HIVERS_REFERENCE,
     HORS_GEL,
+    KCR_NF_P98_086,
+    KCR_VB6,
     STATIONS_METEO,
     StationMeteo,
     chaussee_verifiee_au_gel,
@@ -64,6 +68,8 @@ from .trafic import (
 )
 
 __all__ = [
+    "AGEL_GCV_NF_P98_086",
+    "BGEL_GCV_NF_P98_086",
     "CatalogueMatSurface",
     "CatalogueStructures",
     "CompositionSurface",
@@ -77,6 +83,8 @@ __all__ = [
     "GRILLES_PF",
     "HIVERS_REFERENCE",
     "HORS_GEL",
+    "KCR_NF_P98_086",
+    "KCR_VB6",
     "LigneEpaisseur",
     "MateriauCompose",
     "MateriauMecanique",

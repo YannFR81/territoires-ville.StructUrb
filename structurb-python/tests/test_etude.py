@@ -202,3 +202,26 @@ def test_indice_gel_personnel_sans_station(catalogues):
     assert res.gel_q1 is not None
     assert res.gel_q2 is not None
     assert res.gel_q1.indice_gel_adm != res.gel_q2.indice_gel_adm
+
+
+def test_dimensionner_etude_norme_2019_gcv(catalogues):
+    cat_str, cat_mts = catalogues
+    s_gcv = cat_str.structures_par_abrege["Enrobés/GCV"][0]
+    kw = dict(
+        catalogue_structures=cat_str,
+        catalogue_surfaces=cat_mts,
+        structure=s_gcv,
+        type_voie="distribution",
+        trafic_initial_pl=50,
+        croissance_pct=2,
+        duree_ans=20,
+        plate_forme="PF2",
+        station="Toulouse",
+        hiver="HRNE",
+        pente_sol_pourcent=0.5,
+    )
+    res_vb6 = dimensionner_etude(**kw, norme_2019=False)
+    res_2019 = dimensionner_etude(**kw, norme_2019=True)
+    assert res_vb6.gel_q1 is not None and res_2019.gel_q1 is not None
+    # Kcr = 0.7 (vs 0.6) ET coefficients GCV 0.008/0.10 (vs 0.012/0.13) -> indice 2019 plus bas
+    assert res_2019.gel_q1.indice_gel_adm < res_vb6.gel_q1.indice_gel_adm
