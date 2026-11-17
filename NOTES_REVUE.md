@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-etude (Lot 5 : Orchestrateur d'étude)
+- Fait :
+  1. Implémentation de l'orchestrateur complet dans `structurb-python/structurb/etude.py` et export dans `structurb/__init__.py` :
+     - `TYPES_STRUCTURE` (`Souple=1 .. PavesDalles=6`, `ModuleMain.bas` l. 171-176) et `structures_compatibles` (`RemplirComboStructures`, filtrage par type de voie, famille de structure et matériaux exclus).
+     - `compositions_surface_compatibles` (`MettreAJourOngletCoucheSurface`, filtrage des compositions d'un `MateriauCompose` par épaisseur préconisée).
+     - `dimensionner_etude` : enchaînement complet `trafic_cumule` -> `cam_preconise` (couplé à `type_structure`) -> `ne_equivalent` -> `rechercher_epaisseur` -> compositions de surface -> `indice_gel_reference` / `indice_gel_admissible` / `chaussee_verifiee_au_gel` (avec option `fidele_vb6`).
+  2. Tests dans `structurb-python/tests/test_etude.py` (3 fonctions : filtrage par type de voie / structure / exclusion de matériau, étude complète `Pavés/GNT` avec vérification au gel `fidele_vb6=True/False`, et matériau composé `Enrobés` + cas hors plage).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_etude.py` : **3 / 3** tests passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Relecture et exécution de `python -m pytest -q` (suite complète) par Claude.
+- À relire par Claude :
+  - `structurb-python/structurb/etude.py`, `structurb-python/tests/test_etude.py`, `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Souhaitez-vous ensuite ajouter la lecture/écriture des fichiers `.urb` (`ModuleFichier.bas`) ou l'option « méthode simplifiée NF P 98-086 (2019) » (`Kcr = 0,7`) ?
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture de claude/option-gel-epaisseurs (9ed2ca2, 700531d)
 - Vérifié :
   - `epaisseurs_pour_gel(qualite, fidele_vb6=True)` (`structurb/epaisseur.py`, exportée dans `structurb/__init__.py`) :
