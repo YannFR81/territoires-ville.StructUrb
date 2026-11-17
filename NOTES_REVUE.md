@@ -16,6 +16,58 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture de claude/charte-signature (b313d54 + fb6ce08), PR n° 4
+(Relecture transmise par YannFR81, reportée ici par Claude.)
+- Vérifié :
+  - `structurb/signature.py` : palette du fork (`#DD590A`, `#5E99C5`, `#179D87`, `#7F0541`), devise et signature en un seul
+    endroit, aucun nom de collectivité.
+  - `structurb/_images.py` et `structurb/assets/` : icône V1 en SVG, pictogrammes embarqués en base64 (concordance avec les PNG),
+    logos CERTU / Cerema uniquement dans `#origine` (« portage non officiel »).
+  - `structurb/rapport.py` et `structurb/dxf.py` : couleurs V1 des couches avec `rang` (base 1 / 2, fondation 1 / 2),
+    calques `STRUCTURB_BASE_2` et `STRUCTURB_FONDATION_2`, ACI 4 / 94 / 3 / 1 / 6.
+  - `structurb/page.py` et `pyproject.toml` : bandeau lie-de-vin → orange, aide `#FFFFE1`, hors limites `#FF0000`,
+    `assets/*` dans `package-data` ; aucun algorithme de calcul modifié.
+  - Tests sous Python 3.9 : 19 / 19 (`tests/test_charte_v1.py`, `tests/test_signature.py`).
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+- En suspens : rendu des calques DXF dans AutoCAD / COVADIS non vérifié ; § 6 de la charte (calculs) à traiter à part.
+
+## 2026-11-17 — Claude — branche claude/charte-signature (charte graphique de Struct-Urb V1, §1 à 5)
+- Source : `CHARTE_V1.md` (relevé fait sous Cowork dans les sources VB6), transmis par YannFR81.
+  Consigne de YannFR81 : **charte seulement, aucun calcul modifié** ; le §6 (giratoires, plages de trafic, durée 5–50 ans,
+  Kcr par défaut, GE au gel) est laissé de côté, à traiter dans une branche à part, avec tests de référence.
+- Fait :
+  - Images régénérées depuis les originaux du dépôt dans `structurb/assets/` : icône `STRUCTUR.ICO` en SVG au pixel près
+    (fond blanc rendu transparent) et en PNG 32 px ; logos CERTU et Cerema réduits ; pictogrammes `ImageMinTec.bmp` et
+    `ImageMaxPra.bmp`. Les pictogrammes sont aussi en base64 dans `structurb/_images.py` (embarqués dans la page Pyodide ;
+    un test vérifie qu’ils sont identiques aux PNG).
+  - Page : favicon et logo d’en-tête V1 ; champs hors limites en rouge `#FF0000` (`:out-of-range`, `:invalid`) ;
+    aide sur fond `#FFFFE1` ; section « Origine » (logos CERTU et Cerema, équipes de la fenêtre « À propos »,
+    mention « portage non officiel ») ; aucun logo institutionnel dans l’en-tête.
+  - Note de calcul : coupe aux couleurs V1 (surface `#00FFFF`, base 1 `#008000`, base 2 `#00FF00`, fondation 1 `#FF0000`,
+    fondation 2 `#FF00FF`) ; pictogrammes min. techno / max. pratique ; JSON des couches enrichi d’un champ `rang` (1 ou 2).
+  - DXF : ACI 4 / 94 / 3 / 1 / 6 ; nouveaux calques `STRUCTURB_BASE_2` et `STRUCTURB_FONDATION_2`.
+  - `test_rapport.py` : le décompte des SVG ne compte plus que les coupes (les pictogrammes sont aussi des SVG).
+- Vérifié : `tests/test_charte_v1.py` (9 cas, écrits avant le code) ; `python -m pytest -q` : 192 réussis, 1 ignoré ;
+  page et note ouvertes dans Chromium (clair et sombre). Aucune valeur de calcul ni test de référence modifié.
+- Non repris (choix) : dessin d’une coupe séparée sur la page (la note affichée dans la page contient déjà les coupes
+  Q1 / Q2 avec le total) ; police MS Sans Serif ; fond gris de fenêtre ; filigrane « BétaTest ».
+- À relire par Gemini : rendu de la page et du DXF dans AutoCAD / COVADIS (couleurs des calques).
+
+## 2026-11-17 — Claude — branche claude/charte-signature (couleurs et signature du portage Python)
+- Fait (demande de YannFR81 : reprendre les couleurs et la signature de l’outil Burmister, sans nommer la collectivité) :
+  - `structurb/signature.py` : palette (orange `#DD590A`, bleu `#5E99C5`, vert `#179D87`, lie-de-vin `#7F0541`), devise
+    « Pour une fonction publique augmentée, pas remplacée. » et texte de signature, définis une seule fois.
+  - Page autonome (`page.py`) : bandeau lie-de-vin → orange, accents orange (texte en orange foncé `#a8430a` pour la lisibilité,
+    `#f5a26b` en mode sombre), aide en bleu, résultat en vert ; pied de page signé.
+  - Note de calcul HTML (`rapport.py`) : titres et filets aux couleurs du fork, signature en bas de note.
+  - `README.md` de `structurb-python` : section « Signature ».
+  - Rôles adaptés au portage (validé par YannFR81) : « Claude et Gemini ont codé en binôme, chacun relisant le travail de l’autre ».
+- Vérifié : tests écrits d’abord (`tests/test_signature.py`, 10 cas, en échec avant le code) ; `python -m pytest -q` : 183 réussis,
+  1 ignoré ; page ouverte dans Chromium en clair et en sombre ; aucun nom de collectivité (test dédié) ; aucune URL https
+  ajoutée (la page ne charge toujours que Pyodide). Aucun calcul modifié.
+- À relire par Gemini : contraste des couleurs (clair et sombre) et texte de la signature.
+- Question pour YannFR81 : la fusion dans `main` t’appartient (elle republiera la page sur GitHub Pages).
+
 ## 2026-11-17 — Claude — premier passage de la CI sur GitHub (après le push de main)
 - Push de `main` vers le fork (`d56c4ce..d37654a`, avance rapide, décision de YannFR81).
 - CI : 3 jobs sur 4 réussis (Ubuntu 3.12, Windows 3.9 et 3.12 : 174 tests, y compris sous Linux).
