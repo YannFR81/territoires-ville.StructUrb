@@ -15,6 +15,7 @@ from .catalogue import (
     ouvrir_fichier_mat_surface,
     ouvrir_fichier_structures,
 )
+from .dxf import coupe_dxf, ecrire_coupe_dxf
 from .epaisseur import (
     EP_LIT_POSE,
     EP_SURFACE_SANS_EPAISSEUR,
@@ -54,6 +55,7 @@ from .gel import (
     quantite_gel_non_gelive,
     quantite_gel_sol_support,
 )
+from .rapport import note_calcul_html
 from .trafic import (
     TYPES_VOIE,
     bornes_trafic_initial,
@@ -78,6 +80,9 @@ from .urb import (
 )
 
 __all__ = [
+    "note_calcul_html",
+    "ecrire_coupe_dxf",
+    "coupe_dxf",
     "AGEL_GCV_NF_P98_086",
     "BGEL_GCV_NF_P98_086",
     "CatalogueMatSurface",

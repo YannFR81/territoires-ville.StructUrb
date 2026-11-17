@@ -16,6 +16,31 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — export HTML, ligne de commande et coupe DXF (branche claude/export-cli)
+Demandes de YannFR81 : export HTML imprimable + ligne de commande ; coupe de chaussée annotée en DXF ;
+page HTML pilotable par les assistants IA des navigateurs.
+- Fait (tests écrits avant le code) :
+  - `structurb/rapport.py` : `note_calcul_html(resultat, structure, **paramètres)` : page HTML autonome (aucune ressource
+    externe), imprimable en A4 (`@page`, `@media print`), coupes Q1 / Q2 en SVG avec les épaisseurs du catalogue
+    (lit de pose dessiné, pas les 3 cm d’affichage), sections repérées (`#resultats-trafic`, `#resultats-epaisseurs`,
+    `#resultats-gel`) et bloc JSON `structurb-donnees` (format `structurb-note/1`, `<` échappé en `<`).
+  - `structurb/dxf.py` : `coupe_dxf` / `ecrire_coupe_dxf` : DXF R12 (AC1009) sans dépendance, cp1252 et CRLF,
+    un calque par rôle (`STRUCTURB_SURFACE`, `_LIT_POSE`, `_BASE`, `_FONDATION`, `_PLATEFORME`, `_TEXTE`, `_CADRE`),
+    contour + remplissage `SOLID` par couche, annotations, cote d’épaisseur totale, symbole de plate-forme ;
+    unité `m` (défaut), `cm` ou `mm`. Pas de tiret long ni de point médian (absents de txt.shx).
+  - `structurb/cli.py` + `__main__.py` : `python -m structurb structures | stations | etude` ; `etude` accepte
+    `--structure` (abrégé, variantes départagées par le type de voie) ou `--index`, toutes les options du gel,
+    `--html`, `--dxf`, `--unite`.
+  - Exports dans `__init__.py` ; section « Ligne de commande » dans le README.
+- Vérifié :
+  - `python -m pytest -q` : **152 / 152** (20 nouveaux tests). Test de relecture par ezdxf : passé en local,
+    sauté dans la CI (ezdxf non installé) ; audit ezdxf : 0 erreur.
+  - Rendu du DXF contrôlé à l’image (Pavés/GNT, Dalles/BC5) ; note HTML contrôlée dans le navigateur.
+  - Catalogue Certu : aucune abréviation ambiguë une fois filtrée par type de voie.
+- En suspens : pilotage **interactif** par les IA du navigateur (formulaire de saisie qui lance le calcul) : choix
+  d’architecture à faire par YannFR81 (serveur local Python ou page autonome).
+- À relire par Gemini : `rapport.py`, `dxf.py`, `cli.py`, les trois fichiers de tests, le README.
+
 ## 2026-11-17 — Claude — fusion dans main de gemini/lot-norme-2019, gemini/lot-urb et claude/ci
 - Fait : trois fusions `--no-ff` dans `main`, dans cet ordre (décision de YannFR81). Conflits limités à ce fichier,
   résolus en gardant toutes les entrées ; `__init__.py` fusionné automatiquement (64 noms exportés, tous présents).

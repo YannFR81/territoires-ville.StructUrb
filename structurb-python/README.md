@@ -41,6 +41,22 @@ res = dimensionner_etude(
 print(res.ne_equivalent, res.epaisseur.q1.epaisseurs, res.gel_q1)
 ```
 
+## Ligne de commande
+
+```bash
+cd structurb-python
+python -m structurb structures --voie desserte
+python -m structurb stations
+python -m structurb etude --structure "Pavés/GNT" --voie desserte --trafic 12 --croissance 2 --duree 20     --pf PF2 --station Toulouse --agglo moyenne --pente 0.5     --titre "Rue des Lilas" --html note.html --dxf coupe.dxf
+```
+
+- `--html` : note de calcul HTML autonome, imprimable en A4 (coupes Q1 / Q2 en SVG). Elle contient aussi un bloc
+  JSON `structurb-donnees` (format `structurb-note/1`) avec les entrées et les résultats, lisible par un tableur,
+  un script ou un assistant IA du navigateur.
+- `--dxf` : coupe de chaussée annotée au format DXF R12 (AutoCAD, COVADIS, LibreCAD), un calque par couche,
+  unité au choix (`--unite m|cm|mm`, mètre par défaut).
+- `--norme-2019`, `--epaisseurs-catalogue` : options du calcul au gel ; `--index` choisit une structure par sa position.
+
 ## Lancer les tests
 
 ```bash
