@@ -16,6 +16,52 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture de claude/aide (4cd7385)
+- Vérifié :
+  - `structurb/aide.py` :
+    - Convertisseur `rtf_texte` + `aide_certu` (7 rubriques `Onglet*.rtf` du CERTU) : propre, aucun reste de syntaxe RTF ni caractère de remplacement ; mention explicite des tableaux images non repris (`plateforme`, `gel`).
+    - Exactitude technique de `DOCUMENTATION` face au VB6 et aux modules Python : formules `Tcum`, seuils d'étude labo (`750` à `1 000 PL/j` sur trafic lourd, bus, giratoires PL), `NE = Tcum × CAM` (majoration ×2 souple et pavés/dalles sur GNT, seuil `10 000 000`), 8 grilles et paliers, `IA = 10 + (AH × Q + BH)² / 0,6`, `Qng` (`0,12` / `0,14`), `Qg` (`<= 0,05` hors gel, `<= 0,25 -> 4`, `<= 1 -> 1/p`, `> 1 -> 0`) : **100 % exact**.
+    - Section NF P 98-086 : résumé rédigé clair, sans extrait ni donnée sensible, cohérent avec l'audit du 2026-11-17.
+  - `cli.py` (`python3.9 -m structurb aide [sujet]`), `page.py` (7 rubriques repliables + section Documentation + `window.structurb.aide`), `README.md` : clairs et complets.
+  - `tests/test_aide.py` : **6 / 6** tests passés sous `python3.9` (via shim `pytest`).
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+
+## 2026-11-17 — Claude — aide en ligne et documentation dans la page (branche claude/aide, sur gemini/aide-page-html)
+Demandes de YannFR81 : « de la documentation et de l’aide », « aide en ligne de la documentation sur page html »,
+« expliquer le fonctionnement du logiciel », « de la norme ». Gemini avait commencé (e198acf, aide rapide) :
+cette branche part de la sienne pour éviter tout conflit.
+- Fait (tests écrits avant le code) :
+  - `structurb/aide.py` : convertisseur RTF → texte ; **aide d’origine du CERTU** (7 rubriques : voie, trafic, CAM, structure,
+    couche de surface, plate-forme, gel) lue dans les `Onglet*.rtf` du dépôt (GPL v3) ; les tableaux qui étaient des images
+    (portance, déflexion, gélivité des sols) sont signalés comme non repris ;
+    documentation du portage : **fonctionnement du logiciel** (étapes et formules : trafic cumulé, NE, paliers du catalogue,
+    Q1/Q2, couche de surface, gel), **la norme NF P98-086 et Struct-Urb** (résumé rédigé, aucun extrait ; points communs
+    et différences, option norme 2019, stations), **utilisation**, **limites**.
+  - Page : aide CERTU repliable dans chaque rubrique du formulaire (`#aide-voie`, `#aide-structure`, `#aide-plateforme`,
+    `#aide-surface`, `#aide-trafic`, `#aide-cam`, `#aide-gel`) ; section **Documentation** en bas de page (`#doc-…`) ;
+    données d’aide en JSON (`#structurb-aide`) et `window.structurb.aide(sujet)` pour les assistants IA.
+  - Ligne de commande : `python -m structurb aide [sujet]`.
+  - Correction de l’aide rapide de Gemini : étude en laboratoire conseillée de 750 à 1 000 PL/j sur les voies à trafic lourd,
+    les voies bus et les giratoires à trafic lourd (et non « au-delà de 750 PL/j en voie à trafic lourd »).
+- Vérifié : `python -m pytest -q` : **174 / 174** ; page contrôlée dans le navigateur (rubriques, documentation, `aide()`),
+  sans débordement horizontal.
+- À relire par Gemini : `aide.py`, `tests/test_aide.py`, les ajouts de `page.py` et `cli.py` ; exactitude des explications.
+- Question pour YannFR81 : le texte « La norme NF P98-086 et Struct-Urb » vous convient-il (terminologie, exactitude) ?
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/aide-page-html (Aide en ligne page HTML)
+- Fait :
+  1. Ajout d'une section d'aide en ligne repliable (`<details id="aide-en-ligne">`) dans `structurb/page.py` couvrant les 4 rubriques métier : Voie & Plate-forme (`PF1`..`PF3`, `Q1`/`Q2`), Trafic & Durée (PL/j, 0–5 %, étude labo > 750 PL/j), Vérification au gel (84 stations, indice perso, pente `<= 0,05` hors gel, option norme 2019 `Kcr = 0,7`) et Exports/IA (note A4, DXF R12, `window.structurb`).
+  2. Ajout de notes contextuelles discrètes (`.aide-champ`) dans les blocs Gel et Options.
+  3. Test `test_page_aide_en_ligne` dans `tests/test_page.py`.
+- Vérifié (tests, cas de référence) :
+  - `tests/test_page.py` : **16 / 16** cas passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Relecture et lancement `python -m pytest -q` par Claude, puis fusion dans `main`.
+- À relire par Claude :
+  - `structurb-python/structurb/page.py` et `structurb-python/tests/test_page.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture du commit 37fc78f (page autonome, claude/export-cli)
 - Vérifié :
   - `structurb/page.py` (`calculer_depuis_json`, `generer_page`, `listes`, `OUTIL`, `_GABARIT`) :

@@ -163,6 +163,29 @@ def _cmd_etude(a: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_aide(a: argparse.Namespace) -> int:
+    from .aide import DOCUMENTATION, SUJETS_CERTU, aide_certu, html_vers_texte
+
+    if not a.sujet:
+        print("Aide du logiciel d’origine (CERTU) :")
+        for s, (_, titre) in SUJETS_CERTU.items():
+            print(f"  {s:15s} {titre}")
+        print("Documentation du portage :")
+        for d in DOCUMENTATION:
+            print(f"  {d['id']:15s} {d['titre']}")
+        print("Usage : python -m structurb aide <rubrique>")
+        return 0
+    if a.sujet in SUJETS_CERTU:
+        r = aide_certu(_dossier_catalogue(a.catalogue))[a.sujet]
+        print(f"{r['titre']}\n\n{r['texte']}")
+        return 0
+    for d in DOCUMENTATION:
+        if d["id"] == a.sujet:
+            print(f"{d['titre']}\n\n{html_vers_texte(d['html'])}")
+            return 0
+    raise ErreurSaisie(f"Rubrique d’aide inconnue : {a.sujet!r} (voir « python -m structurb aide »).")
+
+
 def _cmd_page(a: argparse.Namespace) -> int:
     from .page import generer_page
 
@@ -186,6 +209,10 @@ def construire_analyseur() -> argparse.ArgumentParser:
 
     pt = sp.add_parser("stations", help="stations météo et indices de gel")
     pt.set_defaults(func=_cmd_stations)
+
+    pa = sp.add_parser("aide", help="aide en ligne (rubriques du logiciel d’origine) et documentation")
+    pa.add_argument("sujet", nargs="?", help="rubrique ; sans sujet, liste des rubriques")
+    pa.set_defaults(func=_cmd_aide)
 
     pp = sp.add_parser("page", help="page HTML autonome (calcul dans le navigateur, pilotable par les IA)")
     pp.add_argument("--sortie", default="structurb.html", help="fichier HTML à écrire")

@@ -74,6 +74,9 @@ grâce à [Pyodide](https://pyodide.org) (version figée, chargée depuis Intern
 - Outil `dimensionner_chaussee` décrit en JSON Schema (bloc `#structurb-outil`) et déclaré via `navigator.modelContext`
   (WebMCP, expérimental) quand le navigateur le propose.
 - Téléchargement de la note HTML et de la coupe DXF.
+- Aide en ligne : aide du logiciel d’origine (CERTU) dans chaque rubrique du formulaire, et documentation
+  (fonctionnement du calcul, place de la norme NF P98-086, utilisation, limites) en bas de page ;
+  `window.structurb.aide(sujet)` pour les assistants IA ; `python -m structurb aide [sujet]` en console.
 
 ## Lancer les tests
 

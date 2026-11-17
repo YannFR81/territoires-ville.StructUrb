@@ -15,6 +15,7 @@ Elle est utilisable par une personne (formulaire) et par un assistant IA du navi
 from __future__ import annotations
 
 import base64
+from html import escape
 import json
 import re
 from functools import lru_cache
@@ -280,6 +281,44 @@ def listes(dossier_catalogue: Optional[Union[str, Path]] = None) -> dict:
     }
 
 
+def _fragments_aide(d: Path) -> Dict[str, str]:
+    """Fragments HTML et JSON de l’aide pour le gabarit de la page."""
+    from .aide import DOCUMENTATION, aide_certu, html_vers_texte, texte_vers_html
+
+    certu = aide_certu(d)
+
+    def bloc(sujet: str) -> str:
+        a = certu[sujet]
+        return (
+            f'<details class="aide-rubrique" id="aide-{sujet}"><summary>Aide : {escape(a["titre"])}</summary>'
+            f"{texte_vers_html(a['texte'])}</details>"
+        )
+
+    docs = "".join(
+        f'<details class="doc" id="doc-{x["id"]}"><summary>{escape(x["titre"])}</summary>{x["html"]}</details>'
+        for x in DOCUMENTATION
+    )
+    toute_aide = "".join(
+        f"<h3>{escape(a['titre'])}</h3>{texte_vers_html(a['texte'])}" for a in certu.values()
+    )
+    documentation = (
+        '<section id="documentation" aria-label="Documentation"><h2>Documentation</h2>' + docs
+        + '<details class="doc" id="doc-aide-certu"><summary>Aide du logiciel d’origine (CERTU)</summary>'
+        + toute_aide + "</details></section>"
+    )
+    donnees = {
+        "certu": certu,
+        "documentation": {x["id"]: {"titre": x["titre"], "texte": html_vers_texte(x["html"])} for x in DOCUMENTATION},
+    }
+    return {
+        "AIDE_VOIE": bloc("voie") + bloc("structure") + bloc("plateforme") + bloc("surface"),
+        "AIDE_TRAFIC": bloc("trafic") + bloc("cam"),
+        "AIDE_GEL": bloc("gel"),
+        "DOCUMENTATION": documentation,
+        "AIDE_JSON": _json_script(donnees),
+    }
+
+
 def generer_page(chemin: Union[str, Path], dossier_catalogue: Optional[Union[str, Path]] = None) -> None:
     """Écrit la page autonome (UTF-8)."""
     d = _dossier(dossier_catalogue)
@@ -298,9 +337,10 @@ def generer_page(chemin: Union[str, Path], dossier_catalogue: Optional[Union[str
         "FICHIERS": _json_script(fichiers),
         "LISTES": _json_script(listes(d)),
         "OUTIL": _json_script(OUTIL),
+        **_fragments_aide(d),
     }
     # Une seule passe : le texte inséré (dont les sources de ce module) n’est pas relu
-    html = re.sub(r"__(PYODIDE_URL|FICHIERS|LISTES|OUTIL)__", lambda m: valeurs[m.group(1)], _GABARIT)
+    html = re.sub(r"__(PYODIDE_URL|FICHIERS|LISTES|OUTIL|AIDE_VOIE|AIDE_TRAFIC|AIDE_GEL|DOCUMENTATION|AIDE_JSON)__", lambda m: valeurs[m.group(1)], _GABARIT)
     Path(chemin).write_text(html, encoding="utf-8")
 
 
@@ -337,6 +377,21 @@ button:disabled { opacity: .5; cursor: wait; }
 #resultat-erreur { color: var(--ko); font-weight: 600; }
 iframe { width: 100%; height: 900px; border: 1px solid var(--bord); border-radius: 8px; background: #fff; margin-top: 12px; }
 details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflow: auto; }
+details.aide { margin: 12px 0 18px; border: 1px solid var(--bord); border-radius: 8px; background: var(--zone); padding: 10px 14px; }
+details.aide summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.aide-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 10px; font-size: 13px; }
+.aide-grille h3 { font-size: 14px; margin: 0 0 6px; border-bottom: 1px solid var(--bord); padding-bottom: 3px; }
+.aide-grille ul { margin: 0; padding-left: 18px; }
+.aide-grille li { margin-bottom: 4px; }
+.aide-rubrique { grid-column: 1 / -1; margin-top: 8px; font-size: 13px; }
+.aide-rubrique summary { cursor: pointer; color: var(--accent); }
+.aide-rubrique p, .doc p { margin: 6px 0; }
+#documentation { margin-top: 28px; }
+#documentation h2 { font-size: 18px; border-bottom: 2px solid var(--bord); padding-bottom: 4px; }
+details.doc { border: 1px solid var(--bord); border-radius: 8px; padding: 8px 14px; margin: 8px 0; }
+details.doc summary { cursor: pointer; font-weight: 600; }
+details.doc code { background: var(--zone); padding: 0 3px; border-radius: 3px; }
+.aide-champ { grid-column: 1 / -1; font-size: 12px; color: var(--doux); margin: 4px 0 0; }
 </style>
 </head>
 <body>
@@ -344,6 +399,44 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
 <h1>Struct-Urb Python</h1>
 <p class="doux">Dimensionnement des structures de chaussées urbaines par le catalogue CERTU. Le calcul s’exécute dans ce navigateur ; aucune donnée n’est envoyée.</p>
 <p id="etat" role="status">Chargement du moteur de calcul (Pyodide, environ 10 Mo la première fois)…</p>
+
+<details id="aide-en-ligne" class="aide">
+  <summary>Aide en ligne &amp; documentation rapide</summary>
+  <div class="aide-grille">
+    <div>
+      <h3>1. Voie &amp; Plate-forme</h3>
+      <ul>
+        <li><strong>Type de voie</strong> : filtre les structures autorisées par le catalogue CERTU et détermine le CAM préconisé.</li>
+        <li><strong>Plate-forme</strong> : portance à long terme — <code>PF1</code> (20–50 MPa), <code>PF2</code> (50–80 MPa), <code>PF2+</code> (80–120 MPa), <code>PF3</code> (&gt; 120 MPa).</li>
+        <li><strong>Q1 / Q2</strong> : qualité de réalisation courante (<code>Q1</code>) ou chantier difficile (<code>Q2</code>).</li>
+      </ul>
+    </div>
+    <div>
+      <h3>2. Trafic &amp; Durée</h3>
+      <ul>
+        <li><strong>Trafic initial</strong> : nombre moyen de poids lourds par jour, par sens et par voie la plus chargée (PL/j).</li>
+        <li><strong>Croissance</strong> : taux annuel linéaire entre <code>0 %</code> et <code>5 %</code> (calculé sur 5 à 50 ans en usage courant).</li>
+        <li><strong>Étude labo</strong> : conseillée pour un trafic initial de <code>750</code> à <code>1 000 PL/j</code> sur les voies à trafic lourd, les voies bus et les giratoires à trafic lourd (au-delà de 1 000 PL/j : hors domaine).</li>
+      </ul>
+    </div>
+    <div>
+      <h3>3. Vérification au gel</h3>
+      <ul>
+        <li><strong>Station ou indice perso</strong> : choisissez une des 84 stations (facteur agglo : <code>1,0</code> / <code>0,9</code> / <code>0,8</code>) ou saisissez un indice local Météo-France (notamment en altitude).</li>
+        <li><strong>Pente de gonflement</strong> : sol non gélif si <code>&lt;= 0,05</code> (chaussée hors gel).</li>
+        <li><strong>Norme 2019</strong> : applique <code>Kcr = 0,7</code> (NF P 98-086 § 6.2.4, méthode simplifiée) et les coefficients GCV du tableau H.2 au lieu de <code>0,6</code> (VB6).</li>
+      </ul>
+    </div>
+    <div>
+      <h3>4. Exports &amp; Pilotage IA</h3>
+      <ul>
+        <li><strong>Note HTML</strong> : page autonome imprimable en A4 (<code>Ctrl+P</code>) avec coupes SVG et données JSON.</li>
+        <li><strong>Coupe DXF</strong> : dessin R12 prêt pour AutoCAD / COVADIS (calques séparés par couche, unité m/cm/mm).</li>
+        <li><strong>Interface IA</strong> : API JavaScript <code>window.structurb.calculer(params)</code> et outil WebMCP <code>dimensionner_chaussee</code>.</li>
+      </ul>
+    </div>
+  </div>
+</details>
 
 <form id="formulaire-etude" novalidate>
   <fieldset>
@@ -353,12 +446,14 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
     <div class="champ"><label for="champ-index">Structure</label><select id="champ-index" name="index" required></select></div>
     <div class="champ"><label for="champ-plate_forme">Classe de plate-forme</label>
       <select id="champ-plate_forme" name="plate_forme" required><option>PF1</option><option selected>PF2</option><option>PF2+</option><option>PF3</option></select></div>
+    __AIDE_VOIE__
   </fieldset>
   <fieldset>
     <legend>Trafic</legend>
     <div class="champ"><label for="champ-trafic_initial_pl">Trafic initial (PL/j)</label><input id="champ-trafic_initial_pl" name="trafic_initial_pl" type="number" min="0" step="1" required value="12"></div>
     <div class="champ"><label for="champ-croissance_pct">Taux de croissance (%)</label><input id="champ-croissance_pct" name="croissance_pct" type="number" min="0" max="5" step="1" value="2"></div>
     <div class="champ"><label for="champ-duree_ans">Durée de service (ans)</label><input id="champ-duree_ans" name="duree_ans" type="number" min="1" step="1" value="20"></div>
+    __AIDE_TRAFIC__
   </fieldset>
   <fieldset>
     <legend>Vérification au gel</legend>
@@ -371,6 +466,8 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
     <div class="champ"><label for="champ-pente_sol_pourcent">Pente de l’essai de gonflement</label><input id="champ-pente_sol_pourcent" name="pente_sol_pourcent" type="number" min="0" step="0.01" placeholder="ex. 0,5"></div>
     <div class="champ"><label for="champ-epaisseur_non_gelive_cm">Couche de forme non gélive (cm)</label><input id="champ-epaisseur_non_gelive_cm" name="epaisseur_non_gelive_cm" type="number" min="0" step="1" value="0"></div>
     <div class="champ case"><input id="champ-couche_forme_traitee" name="couche_forme_traitee" type="checkbox"><label for="champ-couche_forme_traitee">Couche de forme traitée</label></div>
+    <p class="aide-champ">Laissez la station vide pour ne pas vérifier au gel. En secteur d’altitude, préférez l’indice personnel.</p>
+    __AIDE_GEL__
   </fieldset>
   <fieldset>
     <legend>Options</legend>
@@ -378,6 +475,7 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
     <div class="champ case"><input id="champ-fidele_vb6" name="fidele_vb6" type="checkbox" checked><label for="champ-fidele_vb6">Gel : épaisseurs comme le VB6 (lit de pose compris)</label></div>
     <div class="champ"><label for="champ-unite_dxf">Unité du DXF</label><select id="champ-unite_dxf" name="unite_dxf"><option value="m">mètre</option><option value="cm">centimètre</option><option value="mm">millimètre</option></select></div>
     <div class="champ"><label for="champ-variante">Variante</label><input id="champ-variante" name="variante" type="text"></div>
+    <p class="aide-champ">Par défaut, le calcul reproduit exactement Struct-Urb VB6 (Kcr = 0,6 et lit de pose inclus).</p>
   </fieldset>
   <div class="actions">
     <button id="bouton-calculer" type="submit" disabled>Calculer</button>
@@ -392,17 +490,20 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
   <details id="resultat-details" hidden><summary>Données du calcul (JSON)</summary><pre id="resultat-json"></pre></details>
   <iframe id="resultat-note" title="Note de calcul" sandbox="" hidden></iframe>
 </section>
+__DOCUMENTATION__
 </main>
 
 <script type="application/json" id="structurb-fichiers">__FICHIERS__</script>
 <script type="application/json" id="structurb-listes">__LISTES__</script>
 <script type="application/json" id="structurb-outil">__OUTIL__</script>
+<script type="application/json" id="structurb-aide">__AIDE_JSON__</script>
 <script>
 (function () {
   "use strict";
   const PYODIDE_URL = "__PYODIDE_URL__";
   const lire = (id) => JSON.parse(document.getElementById(id).textContent);
   const LISTES = lire("structurb-listes");
+  const AIDE = lire("structurb-aide");
   const OUTIL = lire("structurb-outil");
   const $ = (id) => document.getElementById(id);
   const nb = (n) => Number(n).toLocaleString("fr-FR");
@@ -502,6 +603,12 @@ details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflo
     structures: (voie) => structures(voie).map((s) => ({ ...s })),
     stations: () => LISTES.stations.map((s) => ({ ...s })),
     outil: OUTIL,
+    // Aide : sans argument, liste des rubriques ; sinon texte de la rubrique (aide CERTU ou documentation)
+    aide: (sujet) => {
+      if (!sujet) return { certu: Object.keys(AIDE.certu), documentation: Object.keys(AIDE.documentation) };
+      const r = AIDE.certu[sujet] || AIDE.documentation[sujet];
+      return r ? { titre: r.titre, texte: r.texte } : null;
+    },
   };
   // WebMCP (expérimental) : déclarer l’outil si le navigateur le permet
   const mc = navigator.modelContext;
