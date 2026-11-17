@@ -16,6 +16,13 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — premier passage de la CI sur GitHub (après le push de main)
+- Push de `main` vers le fork (`d56c4ce..d37654a`, avance rapide, décision de YannFR81).
+- CI : 3 jobs sur 4 réussis (Ubuntu 3.12, Windows 3.9 et 3.12 : 174 tests, y compris sous Linux).
+  Échec d’installation seulement pour Ubuntu + Python 3.9 : `ubuntu-latest` est désormais Ubuntu 26.04, sans Python 3.9.
+- Correction : ce couple tourne sur `ubuntu-24.04` (Python 3.9 disponible sur 22.04 et 24.04 d’après le manifeste
+  `actions/python-versions`). Python 3.9 étant en fin de vie, la version minimale devra être relevée à terme.
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture de claude/aide (4cd7385)
 - Vérifié :
   - `structurb/aide.py` :
