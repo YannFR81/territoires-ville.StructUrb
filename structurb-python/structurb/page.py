@@ -352,53 +352,229 @@ _GABARIT = r"""<!doctype html>
 <title>Struct-Urb Python</title>
 <meta name="description" content="Dimensionnement des structures de chaussées urbaines (catalogue CERTU), calcul dans le navigateur.">
 <style>
-:root { color-scheme: light dark; --fond:#fff; --texte:#1d2330; --doux:#5b6475; --bord:#d9dee7; --accent:#1f5fbf; --ok:#1a7f37; --ko:#b42318; --zone:#f5f7fa; }
-@media (prefers-color-scheme: dark) { :root { --fond:#15181e; --texte:#e7eaf0; --doux:#a3abba; --bord:#333a46; --accent:#7aa7ff; --ok:#56d17b; --ko:#ff7b72; --zone:#1d2129; } }
+:root {
+  color-scheme: light dark;
+  --fond: #f1f5f9;
+  --carte: #ffffff;
+  --texte: #0f172a;
+  --doux: #475569;
+  --bord: #cbd5e1;
+  --bord-doux: #e2e8f0;
+  --accent: #1d4ed8;
+  --accent-fonce: #1e40af;
+  --accent-doux: rgba(29, 78, 216, .10);
+  --ok: #15803d;
+  --ok-fond: #dcfce7;
+  --ko: #b91c1c;
+  --ko-fond: #fee2e2;
+  --zone: #f8fafc;
+  --ombre: 0 1px 3px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #0b1120;
+    --carte: #131c31;
+    --texte: #e2e8f0;
+    --doux: #94a3b8;
+    --bord: #334155;
+    --bord-doux: #1e293b;
+    --accent: #60a5fa;
+    --accent-fonce: #3b82f6;
+    --accent-doux: rgba(96, 165, 250, .14);
+    --ok: #4ade80;
+    --ok-fond: rgba(34, 197, 94, .14);
+    --ko: #f87171;
+    --ko-fond: rgba(239, 68, 68, .14);
+    --zone: #0f172a;
+    --ombre: 0 2px 6px rgba(0, 0, 0, .35), 0 10px 28px rgba(0, 0, 0, .28);
+  }
+}
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--fond); color: var(--texte); font: 15px/1.45 "Segoe UI", Arial, sans-serif; }
-main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
-h1 { font-size: 22px; margin: 0 0 4px; }
+body { margin: 0; background: var(--fond); color: var(--texte); font: 15px/1.5 "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+main { max-width: 1140px; margin: 0 auto; padding: 24px 18px 56px; }
+.hero {
+  background: linear-gradient(135deg, #0f294a 0%, #1d4ed8 65%, #0284c7 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 22px 24px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 28px rgba(15, 41, 74, .22);
+}
+.hero-haut { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .28);
+  color: #f8fafc;
+}
+h1 { font-size: 25px; margin: 0; letter-spacing: -.01em; }
+.hero p.sous-titre { margin: 8px 0 14px; color: rgba(255, 255, 255, .88); max-width: 78ch; font-size: 14px; }
 .doux { color: var(--doux); }
-#etat { padding: 6px 10px; border-radius: 6px; background: var(--zone); border: 1px solid var(--bord); display: inline-block; margin: 8px 0 16px; }
-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-fieldset { border: 1px solid var(--bord); border-radius: 8px; padding: 10px 14px 14px; margin: 0; }
-legend { font-weight: 600; padding: 0 6px; }
-.champ { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; align-items: center; margin: 6px 0; }
+#etat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .32);
+  border: 1px solid rgba(255, 255, 255, .22);
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+}
+#etat::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, .28);
+  flex: none;
+}
+#etat[data-etat="pret"]::before { background: #4ade80; box-shadow: 0 0 0 3px rgba(74, 222, 128, .28); }
+#etat[data-etat="erreur"]::before { background: #f87171; box-shadow: 0 0 0 3px rgba(248, 113, 113, .28); }
+form { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+fieldset {
+  background: var(--carte);
+  border: 1px solid var(--bord-doux);
+  border-radius: 12px;
+  padding: 14px 18px 18px;
+  margin: 0;
+  box-shadow: var(--ombre);
+}
+legend {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+  background: var(--carte);
+  border: 1px solid var(--bord-doux);
+  border-radius: 999px;
+  padding: 2px 12px;
+}
+.champ { display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; align-items: center; margin: 8px 0; }
 .champ.case { grid-template-columns: auto 1fr; }
-label { font-size: 14px; }
-input, select { font: inherit; padding: 5px 7px; border: 1px solid var(--bord); border-radius: 6px; background: var(--fond); color: var(--texte); width: 100%; }
-input[type=checkbox] { width: auto; }
-.actions { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-button, .bouton { font: inherit; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; text-decoration: none; }
-.bouton.second { background: transparent; color: var(--accent); }
-button:disabled { opacity: .5; cursor: wait; }
-#resultat { margin-top: 20px; }
-#resultat-resume { white-space: pre-wrap; background: var(--zone); border: 1px solid var(--bord); border-radius: 8px; padding: 10px 12px; }
-#resultat-erreur { color: var(--ko); font-weight: 600; }
-iframe { width: 100%; height: 900px; border: 1px solid var(--bord); border-radius: 8px; background: #fff; margin-top: 12px; }
-details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflow: auto; }
-details.aide { margin: 12px 0 18px; border: 1px solid var(--bord); border-radius: 8px; background: var(--zone); padding: 10px 14px; }
-details.aide summary { cursor: pointer; font-weight: 600; color: var(--accent); }
-.aide-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 10px; font-size: 13px; }
-.aide-grille h3 { font-size: 14px; margin: 0 0 6px; border-bottom: 1px solid var(--bord); padding-bottom: 3px; }
+label { font-size: 13.5px; font-weight: 500; color: var(--texte); }
+input, select {
+  font: inherit;
+  font-size: 14px;
+  padding: 7px 10px;
+  border: 1px solid var(--bord);
+  border-radius: 8px;
+  background: var(--zone);
+  color: var(--texte);
+  width: 100%;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--carte);
+  box-shadow: 0 0 0 3px var(--accent-doux);
+}
+input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--carte);
+  border: 1px solid var(--bord-doux);
+  border-radius: 12px;
+  box-shadow: var(--ombre);
+}
+button, .bouton {
+  font: inherit;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-fonce));
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .12s ease, box-shadow .15s ease, opacity .15s ease;
+}
+button:hover:not(:disabled), .bouton:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--accent-doux); }
+.bouton.second { background: var(--carte); color: var(--accent); }
+.bouton.second:hover { background: var(--accent-doux); }
+button:disabled { opacity: .55; cursor: wait; transform: none; }
+#resultat { margin-top: 22px; }
+#resultat-resume {
+  white-space: pre-wrap;
+  background: var(--carte);
+  border: 1px solid var(--bord-doux);
+  border-left: 4px solid var(--ok);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: var(--ombre);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13.5px;
+}
+#resultat-erreur {
+  color: var(--ko);
+  background: var(--ko-fond);
+  border-left: 4px solid var(--ko);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-weight: 600;
+}
+iframe { width: 100%; height: 920px; border: 1px solid var(--bord-doux); border-radius: 12px; background: #fff; margin-top: 14px; box-shadow: var(--ombre); }
+details pre { white-space: pre-wrap; font-size: 12px; max-height: 360px; overflow: auto; background: var(--zone); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--bord-doux); }
+details.aide {
+  margin: 0 0 18px;
+  border: 1px solid var(--bord-doux);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--carte);
+  padding: 12px 16px;
+  box-shadow: var(--ombre);
+}
+details.aide summary { cursor: pointer; font-weight: 700; color: var(--accent); }
+.aide-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 12px; margin-top: 12px; font-size: 13px; }
+.aide-grille > div { background: var(--zone); border: 1px solid var(--bord-doux); border-radius: 8px; padding: 10px 12px; }
+.aide-grille h3 { font-size: 13.5px; margin: 0 0 6px; color: var(--accent); border-bottom: 1px solid var(--bord-doux); padding-bottom: 4px; }
 .aide-grille ul { margin: 0; padding-left: 18px; }
 .aide-grille li { margin-bottom: 4px; }
-.aide-rubrique { grid-column: 1 / -1; margin-top: 8px; font-size: 13px; }
-.aide-rubrique summary { cursor: pointer; color: var(--accent); }
+.aide-rubrique { grid-column: 1 / -1; margin-top: 8px; font-size: 12.5px; background: var(--zone); border: 1px solid var(--bord-doux); border-radius: 8px; padding: 6px 10px; }
+.aide-rubrique summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 .aide-rubrique p, .doc p { margin: 6px 0; }
-#documentation { margin-top: 28px; }
-#documentation h2 { font-size: 18px; border-bottom: 2px solid var(--bord); padding-bottom: 4px; }
-details.doc { border: 1px solid var(--bord); border-radius: 8px; padding: 8px 14px; margin: 8px 0; }
-details.doc summary { cursor: pointer; font-weight: 600; }
-details.doc code { background: var(--zone); padding: 0 3px; border-radius: 3px; }
-.aide-champ { grid-column: 1 / -1; font-size: 12px; color: var(--doux); margin: 4px 0 0; }
+#documentation { margin-top: 30px; }
+#documentation h2 { font-size: 18px; border-bottom: 2px solid var(--bord); padding-bottom: 6px; margin-bottom: 12px; }
+details.doc {
+  background: var(--carte);
+  border: 1px solid var(--bord-doux);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 10px 0;
+  box-shadow: var(--ombre);
+}
+details.doc summary { cursor: pointer; font-weight: 600; color: var(--texte); }
+details.doc code, details.aide code { background: var(--accent-doux); color: var(--accent); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+.aide-champ { grid-column: 1 / -1; font-size: 12px; color: var(--doux); margin: 6px 0 0; }
+@media (max-width: 600px) {
+  .champ { grid-template-columns: 1fr; gap: 4px; }
+  .hero { padding: 18px 16px; }
+}
 </style>
 </head>
 <body>
 <main>
-<h1>Struct-Urb Python</h1>
-<p class="doux">Dimensionnement des structures de chaussées urbaines par le catalogue CERTU. Le calcul s’exécute dans ce navigateur ; aucune donnée n’est envoyée.</p>
-<p id="etat" role="status">Chargement du moteur de calcul (Pyodide, environ 10 Mo la première fois)…</p>
+<header class="hero">
+  <div class="hero-haut">
+    <h1>Struct-Urb Python</h1>
+    <span class="badge">Catalogue CERTU · Calcul 100 % local</span>
+  </div>
+  <p class="sous-titre">Dimensionnement des structures de chaussées urbaines par le catalogue CERTU. Le calcul s’exécute dans ce navigateur ; aucune donnée n’est envoyée.</p>
+  <p id="etat" role="status" data-etat="chargement">Chargement du moteur de calcul (Pyodide, environ 10 Mo la première fois)…</p>
+</header>
 
 <details id="aide-en-ligne" class="aide">
   <summary>Aide en ligne &amp; documentation rapide</summary>
@@ -548,9 +724,13 @@ __DOCUMENTATION__
     return py.pyimport("structurb.page");
   })();
   pret.then(() => {
+    $("etat").dataset.etat = "pret";
     $("etat").textContent = "Moteur de calcul prêt.";
     $("bouton-calculer").disabled = false;
-  }, (e) => { $("etat").textContent = "Erreur : " + e.message; });
+  }, (e) => {
+    $("etat").dataset.etat = "erreur";
+    $("etat").textContent = "Erreur : " + e.message;
+  });
 
   async function calculer(params) {
     const module = await pret;
