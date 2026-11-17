@@ -16,6 +16,36 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture du lot 5 Étude (349ff79, branche gemini/lot-etude)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **125 / 125**.
+  - `TYPES_STRUCTURE` conforme aux constantes `Souple..PavesDalles` (`ModuleMain.bas`, l. 171-176).
+  - `structures_compatibles` face à `RemplirComboStructures` : test du type de voie (7 drapeaux `monUtil*`), du type de structure
+    et des matériaux de base / fondation : conforme, avec les extensions notées en remarque.
+  - `compositions_surface_compatibles` face à `MettreAJourOngletCoucheSurface` / `AjouterComposition` : filtre sur l’épaisseur
+    préconisée, sans autre condition : conforme.
+  - Chaîne `dimensionner_etude` : CAM préconisé avec `type_cam` et la famille de la structure (majoration ×2 souple et pavés/dalles
+    sur GNT), NE, `epaisseur_possible` puis `rechercher_epaisseur`, coefficients Agel / Bgel des trois couches,
+    `epaisseurs_pour_gel` avec l’option : conforme.
+- **À corriger (bloquant)** :
+  1. `etude_labo = etude_labo_conseillee(ne, type_voie)` : la fonction attend le **trafic initial** (PL/j), pas le NE
+     (`VerifierMinMaxTraficIni` compare le trafic initial à 750 < T ≤ 1000). Avec le NE, le conseil n’est presque jamais donné.
+     Exemple : voie à trafic lourd, 900 PL/j, 2 %, 20 ans (Enrobés/GB3/GB3, PF3) → NE 1 563 660 → `etude_labo = False`,
+     alors que le VB6 conseille l’étude (`etude_labo_conseillee(900, "trafic_lourd") = True`).
+     Correction : `etude_labo_conseillee(trafic_initial_pl, type_voie)`, et un test avec 900 PL/j en trafic lourd.
+- À corriger (non bloquant) :
+  2. Station par défaut `"Toulouse"` écrite en dur quand seul l’indice personnel est donné : sans effet sur le calcul
+     (l’indice personnel court-circuite la station), mais trompeur. Ne pas appeler la station dans ce cas.
+  3. Compositions : le VB6 remplit les listes Q1 **et** Q2 dès que l’onglet est actif (Q1 ou Q2 trouvée) ; le lot 5 ne les remplit
+     que pour la qualité trouvée. Cas concernés dans le catalogue Certu : **200 lignes** de grille (matériau composé, une seule
+     qualité trouvée). Le choix du lot 5 est défendable : le documenter comme écart, ou s’aligner sur le VB6.
+  4. Extensions à documenter dans les docstrings : `type_structure=None` accepte tous les types (le VB6 en exige un) ;
+     `materiaux_exclus` remplace le drapeau `monUtilisationAutorisée` des options.
+  5. Tests : le commentaire de `test_etude_materiau_compose_et_hors_limite` parle d’Enrobés/GB3/GB3 alors que le test
+     utilise Enrobés/GNT ; ajouter le cas du point 1 et un cas où Q1 et Q2 diffèrent.
+- Verdict : **À CORRIGER** (point 1).
+- Question pour YannFR81 : point 3, faut-il afficher les compositions d’une qualité dont l’épaisseur n’est pas trouvée (comme le VB6) ?
+
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-etude (Lot 5 : Orchestrateur d'étude)
 - Fait :
   1. Implémentation de l'orchestrateur complet dans `structurb-python/structurb/etude.py` et export dans `structurb/__init__.py` :
