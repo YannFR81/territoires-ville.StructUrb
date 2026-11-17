@@ -146,3 +146,50 @@ def test_ne_hors_limite_si_superieur_ne_max_structure(catalogues):
     assert r["ok"] is True
     assert r["donnees"]["resultats"]["ne_equivalent"] > es_gnt.nb_essieux_max
     assert r["donnees"]["resultats"]["ne_hors_limite"] is True
+
+
+# --- 4. Durée de service : 5 à 50 ans (VerifierMinMaxDuréeService) ----------
+
+@pytest.mark.parametrize("duree", [0, 4, 51, 100])
+def test_duree_service_hors_limites_refusee(catalogues, duree):
+    cat_str, cat_mts = catalogues
+    with pytest.raises(ValueError, match="5.*50"):
+        dimensionner_etude(
+            cat_str, cat_mts, cat_str.structures[49],
+            type_voie="desserte",
+            trafic_initial_pl=12,
+            croissance_pct=1,
+            duree_ans=duree,
+            plate_forme="PF2",
+        )
+    r = json.loads(calculer_depuis_json(json.dumps({
+        "index": 49,
+        "type_voie": "desserte",
+        "trafic_initial_pl": 12,
+        "croissance_pct": 1,
+        "duree_ans": duree,
+        "plate_forme": "PF2",
+    }), dossier_catalogue=REPO_ROOT))
+    assert r["ok"] is False
+    assert "5 à 50" in r["erreur"]
+
+
+def test_duree_service_bornes_5_50_acceptees(catalogues, tmp_path):
+    from structurb.page import OUTIL, generer_page
+    cat_str, cat_mts = catalogues
+    for d in (5, 50):
+        res = dimensionner_etude(
+            cat_str, cat_mts, cat_str.structures[49],
+            type_voie="desserte",
+            trafic_initial_pl=12,
+            croissance_pct=1,
+            duree_ans=d,
+            plate_forme="PF2",
+        )
+        assert res.trafic_cumule > 0
+    schema_d = OUTIL["inputSchema"]["properties"]["duree_ans"]
+    assert schema_d["minimum"] == 5 and schema_d["maximum"] == 50
+    f = tmp_path / "page.html"
+    generer_page(f, dossier_catalogue=REPO_ROOT)
+    html = f.read_text(encoding="utf-8")
+    assert 'id="champ-duree_ans" name="duree_ans" type="number" min="5" max="50"' in html

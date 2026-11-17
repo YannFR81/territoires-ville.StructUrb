@@ -208,12 +208,15 @@ def dimensionner_etude(
     """Exécute un dimensionnement complet (Trafic -> NE -> Épaisseurs -> Surface -> Gel).
 
     Réf. VB6 : ``frmDocument.frm`` (l. 2985-2989 : PF1 interdite en giratoire) ;
-    ``ModuleSaisie.bas :: VerifierMinMaxTraficIni`` (l. 51-103 : plage tolérée de trafic initial).
+    ``ModuleSaisie.bas :: VerifierMinMaxTraficIni`` (l. 51-103 : plage tolérée de trafic initial) ;
+    ``ModuleSaisie.bas :: VerifierMinMaxDuréeService`` (l. 105-125 : durée de service de 5 à 50 ans).
     """
     if type_voie in ("giratoire_distribution", "giratoire_trafic_lourd") and plate_forme == "PF1":
         raise ValueError(
             "La plate-forme PF1 n’est pas admise pour un giratoire (choisir PF2, PF2+ ou PF3)."
         )
+    if isinstance(duree_ans, bool) or not isinstance(duree_ans, int) or not (5 <= duree_ans <= 50):
+        raise ValueError(f"Durée de service hors limites : {duree_ans!r} (attendu : 5 à 50 ans).")
     if statut_trafic_initial(trafic_initial_pl, type_voie) == "hors_domaine":
         min_tol, _, _, max_tol = bornes_trafic_initial(type_voie)
         raise ValueError(

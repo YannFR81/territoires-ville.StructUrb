@@ -54,7 +54,7 @@ OUTIL: Dict[str, Any] = {
             "type_voie": {"type": "string", "enum": list(TYPES_VOIE)},
             "trafic_initial_pl": {"type": "integer", "minimum": 0, "description": "poids lourds par jour"},
             "croissance_pct": {"type": "integer", "minimum": 0, "maximum": 5, "default": 2},
-            "duree_ans": {"type": "integer", "minimum": 1, "default": 20},
+            "duree_ans": {"type": "integer", "minimum": 5, "maximum": 50, "default": 20},
             "plate_forme": {"type": "string", "enum": list(PLATES_FORMES)},
             "station": {"type": "string", "description": "station météo (voir window.structurb.stations())"},
             "hiver": {"type": "string", "enum": list(HIVERS_REFERENCE), "default": "HRNE"},
@@ -199,7 +199,7 @@ def _calculer(p: dict, dossier: Path) -> dict:
         type_voie=voie,
         trafic_initial_pl=_entier(p, "trafic_initial_pl", "Trafic initial", mini=0),
         croissance_pct=_entier(p, "croissance_pct", "Taux de croissance", defaut=2, mini=0, maxi=5),
-        duree_ans=_entier(p, "duree_ans", "Durée de service", defaut=20, mini=1),
+        duree_ans=_entier(p, "duree_ans", "Durée de service", defaut=20, mini=5, maxi=50),
         plate_forme=pf,
         station=station,
         hiver=_choix(p, "hiver", "Hiver de référence", HIVERS_REFERENCE, defaut="HRNE"),
@@ -676,7 +676,7 @@ footer.pied p { margin: 0; }
     <legend>Trafic</legend>
     <div class="champ"><label for="champ-trafic_initial_pl">Trafic initial (PL/j)</label><input id="champ-trafic_initial_pl" name="trafic_initial_pl" type="number" min="0" step="1" required value="12"></div>
     <div class="champ"><label for="champ-croissance_pct">Taux de croissance (%)</label><input id="champ-croissance_pct" name="croissance_pct" type="number" min="0" max="5" step="1" value="2"></div>
-    <div class="champ"><label for="champ-duree_ans">Durée de service (ans)</label><input id="champ-duree_ans" name="duree_ans" type="number" min="1" step="1" value="20"></div>
+    <div class="champ"><label for="champ-duree_ans">Durée de service (ans)</label><input id="champ-duree_ans" name="duree_ans" type="number" min="5" max="50" step="1" value="20"></div>
     __AIDE_TRAFIC__
   </fieldset>
   <fieldset>
