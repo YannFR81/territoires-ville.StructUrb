@@ -12,6 +12,9 @@ authors = [
     { name = "YannFR81" },
 ]
 
+[tool.setuptools.package-data]
+structurb = ["assets/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

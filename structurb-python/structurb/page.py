@@ -320,9 +320,17 @@ def _fragments_aide(d: Path) -> Dict[str, str]:
     }
 
 
+_ASSETS = Path(__file__).resolve().parent / "assets"
+
+
+def _b64_asset(nom: str) -> str:
+    return base64.b64encode((_ASSETS / nom).read_bytes()).decode("ascii")
+
+
 def generer_page(chemin: Union[str, Path], dossier_catalogue: Optional[Union[str, Path]] = None) -> None:
     """Écrit la page autonome (UTF-8)."""
     d = _dossier(dossier_catalogue)
+    icone = (_ASSETS / "structurb_icone_v1.svg").read_text(encoding="utf-8")
     sources = {
         f"structurb/{f.name}": f.read_text(encoding="utf-8")
         for f in sorted(_DOSSIER_PAQUET.glob("*.py"))
@@ -340,9 +348,13 @@ def generer_page(chemin: Union[str, Path], dossier_catalogue: Optional[Union[str
         "OUTIL": _json_script(OUTIL),
         **_fragments_aide(d),
         "SIGNATURE": signature_html(),
+        "FAVICON": "data:image/svg+xml;base64," + base64.b64encode(icone.encode("utf-8")).decode("ascii"),
+        "ICONE": icone,
+        "LOGO_CERTU": _b64_asset("logo_certu.png"),
+        "LOGO_CEREMA": _b64_asset("logo_cerema.png"),
     }
     # Une seule passe : le texte inséré (dont les sources de ce module) n’est pas relu
-    html = re.sub(r"__(PYODIDE_URL|FICHIERS|LISTES|OUTIL|AIDE_VOIE|AIDE_TRAFIC|AIDE_GEL|DOCUMENTATION|AIDE_JSON|SIGNATURE)__", lambda m: valeurs[m.group(1)], _GABARIT)
+    html = re.sub(r"__(PYODIDE_URL|FICHIERS|LISTES|OUTIL|AIDE_VOIE|AIDE_TRAFIC|AIDE_GEL|DOCUMENTATION|AIDE_JSON|SIGNATURE|FAVICON|ICONE|LOGO_CERTU|LOGO_CEREMA)__", lambda m: valeurs[m.group(1)], _GABARIT)
     Path(chemin).write_text(html, encoding="utf-8")
 
 
@@ -352,6 +364,7 @@ _GABARIT = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Struct-Urb Python</title>
+<link rel="icon" href="__FAVICON__">
 <meta name="description" content="Dimensionnement des structures de chaussées urbaines (catalogue CERTU), calcul dans le navigateur.">
 <style>
 :root {
@@ -376,6 +389,7 @@ _GABARIT = r"""<!doctype html>
   --ko: #b91c1c;
   --ko-fond: #fee2e2;
   --zone: #f8fafc;
+  --aide-fond: #FFFFE1; /* info-bulle système de la V1 (&H80000018) */
   --ombre: 0 1px 3px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .05);
 }
 @media (prefers-color-scheme: dark) {
@@ -396,6 +410,7 @@ _GABARIT = r"""<!doctype html>
     --ko: #f87171;
     --ko-fond: rgba(239, 68, 68, .14);
     --zone: #0f172a;
+    --aide-fond: #2a2814;
     --ombre: 0 2px 6px rgba(0, 0, 0, .35), 0 10px 28px rgba(0, 0, 0, .28);
   }
 }
@@ -422,7 +437,9 @@ main { max-width: 1140px; margin: 0 auto; padding: 24px 18px 56px; }
   border: 1px solid rgba(255, 255, 255, .28);
   color: #f8fafc;
 }
-h1 { font-size: 25px; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: 25px; margin: 0; letter-spacing: -.01em; display: flex; align-items: center; gap: 12px; }
+.logo-app { display: inline-flex; background: #fff; border-radius: 8px; padding: 4px; box-shadow: 0 1px 4px rgba(0, 0, 0, .25); }
+.logo-app svg { width: 32px; height: 32px; display: block; }
 .hero p.sous-titre { margin: 8px 0 14px; color: rgba(255, 255, 255, .88); max-width: 78ch; font-size: 14px; }
 .doux { color: var(--doux); }
 #etat {
@@ -487,6 +504,8 @@ input:focus, select:focus {
   background: var(--carte);
   box-shadow: 0 0 0 3px var(--accent-doux);
 }
+/* Valeur hors limites : texte rouge QBColor(12), comme la V1 */
+input:out-of-range, input:invalid { color: #FF0000; border-color: #FF0000; }
 input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent-texte); cursor: pointer; }
 .actions {
   grid-column: 1 / -1;
@@ -543,7 +562,7 @@ details.aide {
   border: 1px solid var(--bord-doux);
   border-left: 4px solid var(--bleu);
   border-radius: 12px;
-  background: var(--carte);
+  background: var(--aide-fond);
   padding: 12px 16px;
   box-shadow: var(--ombre);
 }
@@ -569,6 +588,11 @@ details.doc {
 details.doc summary { cursor: pointer; font-weight: 600; color: var(--texte); }
 details.doc code, details.aide code { background: var(--accent-doux); color: var(--accent-texte); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
 .aide-champ { grid-column: 1 / -1; font-size: 12px; color: var(--doux); margin: 6px 0 0; }
+#origine { margin-top: 30px; background: var(--carte); border: 1px solid var(--bord-doux); border-radius: 12px; padding: 14px 18px; box-shadow: var(--ombre); font-size: 13px; }
+#origine h2 { font-size: 16px; margin: 0 0 10px; }
+#origine .logos { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; margin-bottom: 10px; }
+#origine .logos img { background: #fff; border-radius: 6px; padding: 4px; }
+#origine ul { margin: 4px 0 8px; padding-left: 18px; }
 footer.pied { margin-top: 34px; padding-top: 12px; border-top: 2px solid var(--orange); font-size: 12.5px; color: var(--doux); }
 footer.pied p { margin: 0; }
 @media (max-width: 600px) {
@@ -581,7 +605,7 @@ footer.pied p { margin: 0; }
 <main>
 <header class="hero">
   <div class="hero-haut">
-    <h1>Struct-Urb Python</h1>
+    <h1><span class="logo-app" aria-hidden="true">__ICONE__</span>Struct-Urb Python</h1>
     <span class="badge">Catalogue CERTU · Calcul 100 % local</span>
   </div>
   <p class="sous-titre">Dimensionnement des structures de chaussées urbaines par le catalogue CERTU. Le calcul s’exécute dans ce navigateur ; aucune donnée n’est envoyée.</p>
@@ -679,6 +703,21 @@ footer.pied p { margin: 0; }
   <iframe id="resultat-note" title="Note de calcul" sandbox="" hidden></iframe>
 </section>
 __DOCUMENTATION__
+<section id="origine" aria-labelledby="origine-titre">
+  <h2 id="origine-titre">Origine</h2>
+  <div class="logos">
+    <img src="data:image/png;base64,__LOGO_CERTU__" width="72" height="72" alt="Logo du CERTU">
+    <img src="data:image/png;base64,__LOGO_CEREMA__" width="170" height="60" alt="Logo du Cerema">
+  </div>
+  <p><strong>D’après Struct-Urb, logiciel du CERTU / Cerema (GPL v3) — portage non officiel.</strong>
+  Ce portage n’est ni produit ni validé par le Cerema ; les logos ci-dessus désignent le logiciel d’origine.</p>
+  <p>Équipes du logiciel d’origine (fenêtre « À propos » de Struct-Urb) :</p>
+  <ul>
+    <li>Cahier des charges : CEREMA / TV / VOI / CGR ; CERTU / Département Systèmes / Groupe Génie urbain ; CERTU / Département Systèmes / Groupe Informatique technique et scientifique.</li>
+    <li>Développement : CERTU / Département Systèmes / Groupe Informatique technique et scientifique.</li>
+    <li>Diffusion et assistance : CEREMA / TV / EREN / Digit@l ; CERTU / Département Systèmes / Groupe Informatique technique et scientifique.</li>
+  </ul>
+</section>
 <footer class="pied">__SIGNATURE__</footer>
 </main>
 

@@ -47,7 +47,7 @@ def test_note_html_contenu(cas_paves):
     # Gel : indice de référence et verdict
     assert "36" in html and "Vérifiée" in html
     # Coupe dessinée en SVG, Q1 et Q2
-    assert html.count("<svg") == 2
+    assert html.count('<svg role="img" aria-label="Coupe') == 2
     # Page autonome et imprimable : aucune ressource externe, styles d’impression
     for externe in ("<link", "<script src", "src=", "url(", "@import"):
         assert externe not in html

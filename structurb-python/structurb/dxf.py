@@ -22,17 +22,21 @@ from typing import List, Optional, Tuple, Union
 from .catalogue import StructureChaussee
 from .epaisseur import ResultatQualite
 from .etude import ResultatEtude
-from .rapport import _couches
+from .rapport import _couches_detail, cle_couleur
 
 # Facteur de conversion des centimètres vers l’unité du dessin
 UNITES = {"m": 0.01, "cm": 1.0, "mm": 10.0}
 
-# Calques : (nom, couleur AutoCAD ACI)
+# Calques : (nom, couleur AutoCAD ACI). Couleurs des couches : charte de Struct-Urb V1
+# (ModuleMain.bas, mesOptionsGen), ramenées aux couleurs ACI les plus proches :
+# surface cyan 4, base 1 vert foncé 94, base 2 vert 3, fondation 1 rouge 1, fondation 2 magenta 6.
 CALQUES = {
-    "surface": ("STRUCTURB_SURFACE", 8),
+    "surface": ("STRUCTURB_SURFACE", 4),
     "lit": ("STRUCTURB_LIT_POSE", 42),
-    "base": ("STRUCTURB_BASE", 151),
-    "fondation": ("STRUCTURB_FONDATION", 253),
+    "base1": ("STRUCTURB_BASE", 94),
+    "base2": ("STRUCTURB_BASE_2", 3),
+    "fondation1": ("STRUCTURB_FONDATION", 1),
+    "fondation2": ("STRUCTURB_FONDATION_2", 6),
     "texte": ("STRUCTURB_TEXTE", 7),
     "plateforme": ("STRUCTURB_PLATEFORME", 34),
     "cadre": ("STRUCTURB_CADRE", 7),
@@ -93,8 +97,8 @@ def _dessiner_qualite(d: _Dxf, x0: float, nom: str, q: ResultatQualite, s: Struc
         return
     y = 0.0
     x1 = x0 + _LARGEUR_CM
-    for role, libelle, ep in _couches(q.ligne, s):
-        calque = CALQUES[role][0]
+    for role, rang, libelle, ep in _couches_detail(q.ligne, s):
+        calque = CALQUES[cle_couleur(role, rang)][0]
         if ep > 0:
             y1 = y - ep
             d.solide(calque, x0, y, x1, y1)

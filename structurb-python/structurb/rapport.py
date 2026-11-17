@@ -12,6 +12,7 @@ import json
 from html import escape
 from typing import List, Optional, Tuple, Union
 
+from ._images import PICTOGRAMMES
 from .catalogue import LigneEpaisseur, StructureChaussee
 from .epaisseur import EP_LIT_POSE, ResultatQualite
 from .etude import ResultatEtude
@@ -35,13 +36,19 @@ NOMS_HIVER = {
 
 _ECHELLE_PX_CM = 5.0
 _HAUTEUR_MIN_PX = 6.0
-_COULEURS = {
-    "surface": "#4b4f58",
+# Couleurs des couches de la coupe : valeurs par défaut de Struct-Urb V1
+# (ModuleMain.bas, mesOptionsGen : maCoulSurf QBColor(11), maCoulBase1 QBColor(2), maCoulBase2 QBColor(10),
+# maCoulFond1 QBColor(12), maCoulFond2 QBColor(13)). Lit de pose et plate-forme : sans équivalent en V1.
+COULEURS_COUCHES = {
+    "surface": "#00FFFF",
     "lit": "#e3c98f",
-    "base": "#8f9bb3",
-    "fondation": "#c3cad8",
+    "base1": "#008000",
+    "base2": "#00FF00",
+    "fondation1": "#FF0000",
+    "fondation2": "#FF00FF",
     "plateforme": "#b08b5b",
 }
+_COULEURS = COULEURS_COUCHES
 
 _CSS = """
 :root { color-scheme: light; }
@@ -62,6 +69,7 @@ th { width: 45%; font-weight: 600; color: #39404f; }
 .ko { color: #b42318; font-weight: 600; }
 .note { color: #555d6e; font-size: 12px; }
 .signature { margin-top: 18px; padding-top: 8px; border-top: 1px solid #dde1e8; color: #555d6e; font-size: 12px; }
+.pictos { display: flex; gap: 8px; margin: 0 0 6px; }
 .alerte { background: #fff4e5; border-left: 4px solid #DD590A; padding: 6px 10px; margin: 8px 0; }
 svg text { font-family: inherit; font-size: 11px; }
 @page { size: A4; margin: 15mm; }
@@ -82,20 +90,30 @@ def _nombre(n: Union[int, float]) -> str:
 
 def _couches(ligne: LigneEpaisseur, structure: StructureChaussee) -> List[Tuple[str, str, int]]:
     """Couches de la coupe (rôle, libellé, épaisseur en cm), de la surface vers la plate-forme."""
-    couches: List[Tuple[str, str, int]] = []
+    return [(role, lib, ep) for role, _, lib, ep in _couches_detail(ligne, structure)]
+
+
+def cle_couleur(role: str, rang: int) -> str:
+    """Clé de ``COULEURS_COUCHES`` : base et fondation ont une couleur par couche (1 ou 2), comme en V1."""
+    return f"{role}{rang}" if role in ("base", "fondation") else role
+
+
+def _couches_detail(ligne: LigneEpaisseur, structure: StructureChaussee) -> List[Tuple[str, int, str, int]]:
+    """Couches de la coupe (rôle, rang 1 ou 2, libellé, épaisseur en cm), de la surface vers la plate-forme."""
+    couches: List[Tuple[str, int, str, int]] = []
     surf = structure.couche_surface
     if surf != "Aucune":
-        couches.append(("surface", surf.strip(), ligne.epaisseur_surface))
+        couches.append(("surface", 1, surf.strip(), ligne.epaisseur_surface))
         if surf in ("Dalles", "Pavés"):
-            couches.append(("lit", "lit de pose", EP_LIT_POSE))
+            couches.append(("lit", 1, "lit de pose", EP_LIT_POSE))
     for role, mat, eps in (
         ("base", structure.couche_base, (ligne.epaisseur_base_1, ligne.epaisseur_base_2)),
         ("fondation", structure.couche_fondation, (ligne.epaisseur_fondation_1, ligne.epaisseur_fondation_2)),
     ):
-        eps_non_nulles = [e for e in eps if e > 0]
-        for k, e in enumerate(eps_non_nulles, start=1):
+        eps_non_nulles = [(rang, e) for rang, e in enumerate(eps, start=1) if e > 0]
+        for k, (rang, e) in enumerate(eps_non_nulles, start=1):
             suffixe = f" ({k}/{len(eps_non_nulles)})" if len(eps_non_nulles) > 1 else ""
-            couches.append((role, f"{mat.strip()}{suffixe}", e))
+            couches.append((role, rang, f"{mat.strip()}{suffixe}", e))
     return couches
 
 
@@ -133,7 +151,8 @@ def _bloc_qualite(nom: str, q: ResultatQualite, structure: StructureChaussee) ->
             f'<div class="coupe"><h3>{nom}</h3>'
             f'<p class="ko">Épaisseur non trouvée (maximum pratique atteint).</p></div>'
         )
-    couches = _couches(q.ligne, structure)
+    detail = _couches_detail(q.ligne, structure)
+    couches = [(cle_couleur(role, rang), lib, ep) for role, rang, lib, ep in detail]
     lignes = "".join(
         f"<tr><td>{escape(lib)}</td><td class=\"nombre\">{ep} cm</td></tr>" for _, lib, ep in couches
     )
@@ -141,10 +160,27 @@ def _bloc_qualite(nom: str, q: ResultatQualite, structure: StructureChaussee) ->
     if q.min_technique.strip().upper() == "OUI":
         infos.append("épaisseur au minimum technologique")
     infos.append(f"Qm = {_nombre(round(q.qm, 2))}")
+    pictos = _pictogrammes(q)
     return (
-        f'<div class="coupe"><h3>{nom}</h3>{_svg_coupe(couches)}'
+        f'<div class="coupe"><h3>{nom}</h3>{pictos}{_svg_coupe(couches)}'
         f"<table>{lignes}</table><p class=\"note\">{escape(' · '.join(infos))}</p></div>"
     )
+
+
+def _pictogrammes(q: ResultatQualite) -> str:
+    """Pictogrammes de Struct-Urb V1 (ImageMinTec.bmp, ImageMaxPra.bmp), en SVG pour rester sans ressource externe."""
+    elems = []
+    for actif, fichier, (l, h), texte in (
+        (q.min_technique.strip().upper() == "OUI", "min_techno.png", (75, 31), "Minimum technologique atteint"),
+        (q.max_pratique.strip().upper() == "OUI", "max_pratique.png", (56, 49), "Maximum pratique atteint"),
+    ):
+        if actif:
+            elems.append(
+                f'<svg class="picto" role="img" aria-label="{texte}" width="{l}" height="{h}" viewBox="0 0 {l} {h}" '
+                f'xmlns="http://www.w3.org/2000/svg"><title>{texte}</title>'
+                f'<image width="{l}" height="{h}" href="data:image/png;base64,{PICTOGRAMMES[fichier]}"/></svg>'
+            )
+    return f'<div class="pictos">{"".join(elems)}</div>' if elems else ""
 
 
 def _json_script(d: object) -> str:
@@ -160,7 +196,8 @@ def donnees_note(
         return {
             "trouvee": q.trouvee,
             "couches": [
-                {"role": role, "materiau": lib, "epaisseur_cm": ep} for role, lib, ep in _couches(q.ligne, structure)
+                {"role": role, "rang": rang, "materiau": lib, "epaisseur_cm": ep}
+                for role, rang, lib, ep in _couches_detail(q.ligne, structure)
             ],
             "qm": round(q.qm, 4),
             "minimum_technologique": q.min_technique.strip().upper() == "OUI",
