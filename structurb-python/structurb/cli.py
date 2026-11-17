@@ -3,7 +3,8 @@
 Sous-commandes :
 - ``structures`` : structures du catalogue utilisables pour un type de voie ;
 - ``stations`` : stations météo et indices de gel ;
-- ``etude`` : dimensionnement complet, résumé à l’écran, note HTML et coupe DXF en option.
+- ``etude`` : dimensionnement complet, résumé à l’écran, note HTML et coupe DXF en option ;
+- ``page`` : page HTML autonome (calcul dans le navigateur avec Pyodide).
 
 Ajout du portage Python (pas d’équivalent dans le VB6, qui n’avait qu’une interface graphique).
 """
@@ -162,6 +163,14 @@ def _cmd_etude(a: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_page(a: argparse.Namespace) -> int:
+    from .page import generer_page
+
+    generer_page(a.sortie, dossier_catalogue=_dossier_catalogue(a.catalogue))
+    print(f"Page autonome : {a.sortie} (ouvrir dans un navigateur ; Internet requis pour charger Pyodide)")
+    return 0
+
+
 def construire_analyseur() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="python -m structurb",
@@ -177,6 +186,10 @@ def construire_analyseur() -> argparse.ArgumentParser:
 
     pt = sp.add_parser("stations", help="stations météo et indices de gel")
     pt.set_defaults(func=_cmd_stations)
+
+    pp = sp.add_parser("page", help="page HTML autonome (calcul dans le navigateur, pilotable par les IA)")
+    pp.add_argument("--sortie", default="structurb.html", help="fichier HTML à écrire")
+    pp.set_defaults(func=_cmd_page)
 
     pe = sp.add_parser("etude", help="dimensionnement complet d’une structure")
     g = pe.add_mutually_exclusive_group(required=True)

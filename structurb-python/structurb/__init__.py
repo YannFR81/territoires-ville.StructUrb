@@ -55,6 +55,7 @@ from .gel import (
     quantite_gel_non_gelive,
     quantite_gel_sol_support,
 )
+from .page import calculer_depuis_json, generer_page
 from .rapport import note_calcul_html
 from .trafic import (
     TYPES_VOIE,
@@ -80,6 +81,8 @@ from .urb import (
 )
 
 __all__ = [
+    "calculer_depuis_json",
+    "generer_page",
     "note_calcul_html",
     "ecrire_coupe_dxf",
     "coupe_dxf",

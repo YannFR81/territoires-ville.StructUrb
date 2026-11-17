@@ -57,6 +57,24 @@ python -m structurb etude --structure "Pavés/GNT" --voie desserte --trafic 12 -
   unité au choix (`--unite m|cm|mm`, mètre par défaut).
 - `--norme-2019`, `--epaisseurs-catalogue` : options du calcul au gel ; `--index` choisit une structure par sa position.
 
+## Page autonome (navigateur)
+
+```bash
+python -m structurb page --sortie structurb.html
+```
+
+Un seul fichier HTML : le moteur Python et les catalogues y sont embarqués, et le calcul s’exécute dans le navigateur
+grâce à [Pyodide](https://pyodide.org) (version figée, chargée depuis Internet au premier usage). Aucune donnée n’est envoyée.
+
+- Formulaire balisé (étiquettes, `name` et `id` stables, zone de résultat annoncée) : une personne ou un assistant IA
+  du navigateur peut le remplir et lancer le calcul.
+- Interface JavaScript : `await window.structurb.calculer({structure: "Pavés/GNT", type_voie: "desserte",
+  trafic_initial_pl: 12, plate_forme: "PF2", station: "Toulouse", pente_sol_pourcent: 0.5})`, ainsi que
+  `window.structurb.structures(type_voie)` et `window.structurb.stations()`.
+- Outil `dimensionner_chaussee` décrit en JSON Schema (bloc `#structurb-outil`) et déclaré via `navigator.modelContext`
+  (WebMCP, expérimental) quand le navigateur le propose.
+- Téléchargement de la note HTML et de la coupe DXF.
+
 ## Lancer les tests
 
 ```bash

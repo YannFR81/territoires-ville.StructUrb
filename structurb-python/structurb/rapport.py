@@ -145,9 +145,14 @@ def _bloc_qualite(nom: str, q: ResultatQualite, structure: StructureChaussee) ->
     )
 
 
-def _donnees_machine(
+def _json_script(d: object) -> str:
+    """JSON à placer dans un bloc <script> : « < » remplacé par la séquence \u003c."""
+    return json.dumps(d, ensure_ascii=False, indent=1).replace("<", r"\u003c")
+
+
+def donnees_note(
     r: ResultatEtude, structure: StructureChaussee, *, titre: str, variante: str, date: str, entrees: dict
-) -> str:
+) -> dict:
     """Bloc JSON (format ``structurb-note/1``) : entrées et résultats, pour les outils et les agents du navigateur."""
     def qualite(q: ResultatQualite) -> dict:
         return {
@@ -196,8 +201,8 @@ def _donnees_machine(
             "gel": gel,
         },
     }
-    # « < » remplacé par la séquence JSON \u003c : le titre ne peut ni fermer ni détourner le bloc <script>
-    return json.dumps(d, ensure_ascii=False, indent=1).replace("<", r"\u003c")
+    return d
+
 
 
 def note_calcul_html(
@@ -332,7 +337,7 @@ def note_calcul_html(
         parties.append(f'<p class="note">{escape(methode)} {escape(epais)}</p>')
 
     parties.append("</section>")
-    donnees = _donnees_machine(
+    donnees = _json_script(donnees_note(
         r, structure, titre=titre, variante=variante, date=date,
         entrees=dict(
             type_voie=type_voie, trafic_initial_pl=trafic_initial_pl, croissance_pct=croissance_pct,
@@ -342,7 +347,7 @@ def note_calcul_html(
             pente_sol_pourcent=pente_sol_pourcent, epaisseur_non_gelive_cm=epaisseur_non_gelive_cm,
             couche_forme_traitee=couche_forme_traitee, norme_2019=norme_2019, fidele_vb6=fidele_vb6,
         ),
-    )
+    ))
     parties.append(f'<script type="application/json" id="structurb-donnees">{donnees}</script>')
     parties.append(
         '<p class="note">Note produite par structurb (portage Python de Struct-Urb, CERTU / Cerema, '

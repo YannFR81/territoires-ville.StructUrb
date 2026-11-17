@@ -16,6 +16,28 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — page autonome pilotable par les IA du navigateur (branche claude/export-cli)
+Décision de YannFR81 : « Page autonome » (plutôt qu’un serveur local Python).
+- Fait (tests écrits avant le code) :
+  - `structurb/page.py` :
+    - `calculer_depuis_json(params_json)` : point d’entrée de la page, paramètres JSON → résultat JSON
+      (`donnees`, `resume`, note `html`, coupe `dxf`) ou `{"ok": false, "erreur": …}` en français ; contrôle des saisies
+      (types, bornes, voie, plate-forme, station, structure prévue pour la voie) ;
+    - `generer_page(chemin)` : un seul fichier HTML (~560 Ko) avec les sources du paquet et les catalogues embarqués,
+      Pyodide **0.26.4** chargé depuis jsDelivr (seule ressource externe) ; remplacement du gabarit en une seule passe ;
+    - formulaire balisé (`label for`, `name`, `id` stables, `aria-live`), listes de choix préremplies sans attendre Pyodide,
+      `window.structurb.{calculer, structures, stations, pret, outil}`, outil `dimensionner_chaussee` en JSON Schema,
+      déclaration WebMCP (`navigator.modelContext`) si disponible, téléchargement de la note et du DXF.
+  - `python -m structurb page --sortie fichier.html` ; `rapport.donnees_note` réutilisable (dictionnaire).
+- Vérifié :
+  - `python -m pytest -q` : **167 / 167** (15 nouveaux tests).
+  - Essai réel dans le navigateur intégré (page servie en local) : Pyodide chargé, formulaire rempli champ par champ
+    comme le ferait un agent, résultat identique à la ligne de commande (Pavés/GNT : NE 20 849, 8 + 4 + 15 cm, gel 36 / 54) ;
+    `window.structurb.calculer` sur Dalles/BC5 avec l’option norme 2019 ; erreur de saisie lisible ; aucune erreur console.
+  - WebMCP non proposé par ce navigateur : non testé en conditions réelles (code protégé par des tests de présence).
+- Limites : Internet nécessaire au premier chargement de Pyodide ; ouverture directe en `file://` non testée ici.
+- À relire par Gemini : `page.py`, `tests/test_page.py`, le gabarit HTML/JS, README.
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture de claude/export-cli (33671bf)
 - Vérifié :
   - `structurb/rapport.py` (`note_calcul_html`, `_svg_coupe`, `_donnees_machine`) : page HTML5 autonome imprimable A4 (`@page`, `@media print`), SVG proportionnels avec épaisseurs catalogue (lit de pose inclus, sans les 3 cm d'affichage), échappement HTML (`escape`) et JSON sécurisé (`replace("<", r"\u003c")` dans `<script id="structurb-donnees">`).
