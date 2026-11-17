@@ -16,6 +16,23 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-urb (correctifs relecture Claude)
+- Fait :
+  1. `lire_urb` (`structurb/urb.py`) : lecture en flux `csv.reader` complet (au lieu d'un découpage ligne par ligne) — gère les titres multi-lignes avec lignes vides sans guillemet parasite.
+  2. `ecrire_urb` : écriture explicite avec `newline="\r\n"` (CRLF garanti quel que soit l'OS).
+  3. `EtudeUrb` : docstring complétée sur l'ambiguïté de `num_index_structure` (doublon `69`) et le rôle de `combo_struct_idx`.
+  4. `formater_note_calcul` : affichage des épaisseurs du catalogue avec noms de couches et matériaux (`Surface (...)`, `Base (...)`, `Fondation (...)`) et texte simple (`I_ref`, `I_adm`) sans LaTeX brut.
+  5. `tests/test_urb.py` : test multi-ligne avec ligne vide (`"Giratoire RD 12\n\nAménagement entrée Nord"`) et vérification de la note de calcul sans LaTeX.
+- Vérifié (tests, cas de référence) :
+  - `tests/test_urb.py` : **4 / 4** tests passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Point 2 de la relecture de Claude : ajout d'un fichier `.urb` réel (anonymisé) saisi dans `Struct-Urb.exe` dès que disponible.
+  - Contre-relecture des correctifs par Claude sur `gemini/lot-norme-2019` (`078347d`) et `gemini/lot-urb` (ce commit).
+- À relire par Claude :
+  - `structurb-python/structurb/urb.py` et `structurb-python/tests/test_urb.py`.
+- Question pour YannFR81 :
+  - Avez-vous un fichier `.urb` réel (ou voulez-vous en enregistrer un rapide dans `Struct-Urb.exe`, avec un titre sur 2 lignes) pour valider le point 2 ?
+
 ## 2026-11-17 — Claude — relecture du lot 7 .urb et note de calcul (eae4804, branche gemini/lot-urb)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **132 / 132**.

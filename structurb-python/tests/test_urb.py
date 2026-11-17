@@ -20,7 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 def test_aller_retour_urb_v2_et_q2(tmp_path):
     etude = EtudeUrb(
         entete=ENTETE_URB_V2,
-        titre="Giratoire RD 12 — Aménagement entrée Nord",
+        titre="Giratoire RD 12\n\nAménagement entrée Nord",
         type_voie="giratoire_distribution",
         qualite="Q2",
         variante="Variante 1",
@@ -134,6 +134,8 @@ def test_formater_note_calcul():
     md = formater_note_calcul(etude, res, structure=s)
     assert "Voirie lotissement" in md
     assert "Pavés/GNT" in md
+    assert "Base (GNT)" in md
     assert "20 849" in md or "20849" in md
     assert "30 000" in md or "30000" in md
     assert "Vérifiée" in md
+    assert "$" not in md  # Pas de LaTeX brut dans la note de calcul
