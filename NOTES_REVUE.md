@@ -16,6 +16,85 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture des correctifs du lot 5 Étude (40f849d, branche gemini/lot-etude)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **128 / 128**.
+  - Point 1 : `etude_labo_conseillee(trafic_initial_pl, type_voie)` ; test 900 PL/j en trafic lourd → étude conseillée. Conforme.
+  - Point 2 : plus de station écrite en dur ; `STATIONS_METEO[0]` ne sert qu’à remplir la signature, l’indice personnel court-circuite
+    la station (test `indice_gel_ref == 85`). Acceptable.
+  - Point 3 (décision de YannFR81) : compositions Q1 et Q2 remplies dès que l’une des deux qualités est trouvée, comme
+    l’activation de l’onglet dans `ValiderOngletCoucheSurface`. Conforme. Contrôle sur le catalogue Certu : sur les 200 lignes
+    où une seule qualité est trouvée, la qualité non trouvée n’a **jamais** de composition (épaisseur préconisée 0 ou sans
+    composition) : la décision ne change aucun résultat avec Certu, seulement avec un catalogue personnel.
+  - Points 4 et 5 : extensions documentées, commentaire de test corrigé, 3 tests ajoutés.
+- Remarque (non bloquante) : `indice_gel_reference` pourrait accepter `station=None` quand un indice personnel est donné,
+  pour éviter la station factice.
+- Verdict : **BON POUR FUSION** de la part de Claude.
+- Question pour YannFR81 : fusion de `gemini/lot-etude` dans `main`.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-etude (correctifs relecture Claude)
+- Fait :
+  1. `dimensionner_etude` (`structurb/etude.py`) : passage de `trafic_initial_pl` (et non `ne`) à `etude_labo_conseillee(trafic_initial_pl, type_voie)`.
+  2. `dimensionner_etude` : suppression de la station `"Toulouse"` en dur quand seul `indice_gel_perso` est fourni (utilisation de `STATIONS_METEO[0]` uniquement pour satisfaire la signature, court-circuitée par `indice_personnel`).
+  3. Compositions de surface (décision YannFR81) : remplissage de `compositions_q1` et `compositions_q2` dès que `res_ep.q1.trouvee or res_ep.q2.trouvee` (comme le VB6).
+  4. Docstring de `structures_compatibles` : documentation des extensions par rapport au VB6 (`type_structure=None` et `materiaux_exclus`).
+  5. `tests/test_etude.py` : commentaire corrigé (`Enrobés/GNT`), ajout de `test_etude_labo_trafic_lourd_900` (`900 PL/j`, `2 %`, `20 ans`, `Enrobés/GB3/GB3`, `PF3` -> `NE = 1 563 660`, `etude_labo = True`), `test_compositions_q1_trouvee_q2_non_trouvee` et `test_indice_gel_personnel_sans_station`.
+- Vérifié (tests, cas de référence) :
+  - `tests/test_etude.py` : **6 / 6** tests passés sous Python 3.9 (via shim `pytest`, `pytest` n'étant pas installé dans `python3.9`).
+- En suspens :
+  - Contre-relecture finale et exécution de `python -m pytest -q` par Claude, puis fusion dans `main`.
+- À relire par Claude :
+  - `structurb-python/structurb/etude.py` et `structurb-python/tests/test_etude.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
+## 2026-11-17 — Claude — relecture du lot 5 Étude (349ff79, branche gemini/lot-etude)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **125 / 125**.
+  - `TYPES_STRUCTURE` conforme aux constantes `Souple..PavesDalles` (`ModuleMain.bas`, l. 171-176).
+  - `structures_compatibles` face à `RemplirComboStructures` : test du type de voie (7 drapeaux `monUtil*`), du type de structure
+    et des matériaux de base / fondation : conforme, avec les extensions notées en remarque.
+  - `compositions_surface_compatibles` face à `MettreAJourOngletCoucheSurface` / `AjouterComposition` : filtre sur l’épaisseur
+    préconisée, sans autre condition : conforme.
+  - Chaîne `dimensionner_etude` : CAM préconisé avec `type_cam` et la famille de la structure (majoration ×2 souple et pavés/dalles
+    sur GNT), NE, `epaisseur_possible` puis `rechercher_epaisseur`, coefficients Agel / Bgel des trois couches,
+    `epaisseurs_pour_gel` avec l’option : conforme.
+- **À corriger (bloquant)** :
+  1. `etude_labo = etude_labo_conseillee(ne, type_voie)` : la fonction attend le **trafic initial** (PL/j), pas le NE
+     (`VerifierMinMaxTraficIni` compare le trafic initial à 750 < T ≤ 1000). Avec le NE, le conseil n’est presque jamais donné.
+     Exemple : voie à trafic lourd, 900 PL/j, 2 %, 20 ans (Enrobés/GB3/GB3, PF3) → NE 1 563 660 → `etude_labo = False`,
+     alors que le VB6 conseille l’étude (`etude_labo_conseillee(900, "trafic_lourd") = True`).
+     Correction : `etude_labo_conseillee(trafic_initial_pl, type_voie)`, et un test avec 900 PL/j en trafic lourd.
+- À corriger (non bloquant) :
+  2. Station par défaut `"Toulouse"` écrite en dur quand seul l’indice personnel est donné : sans effet sur le calcul
+     (l’indice personnel court-circuite la station), mais trompeur. Ne pas appeler la station dans ce cas.
+  3. Compositions : le VB6 remplit les listes Q1 **et** Q2 dès que l’onglet est actif (Q1 ou Q2 trouvée) ; le lot 5 ne les remplit
+     que pour la qualité trouvée. Cas concernés dans le catalogue Certu : **200 lignes** de grille (matériau composé, une seule
+     qualité trouvée). Le choix du lot 5 est défendable : le documenter comme écart, ou s’aligner sur le VB6.
+  4. Extensions à documenter dans les docstrings : `type_structure=None` accepte tous les types (le VB6 en exige un) ;
+     `materiaux_exclus` remplace le drapeau `monUtilisationAutorisée` des options.
+  5. Tests : le commentaire de `test_etude_materiau_compose_et_hors_limite` parle d’Enrobés/GB3/GB3 alors que le test
+     utilise Enrobés/GNT ; ajouter le cas du point 1 et un cas où Q1 et Q2 diffèrent.
+- Verdict : **À CORRIGER** (point 1).
+- Décision de YannFR81 (point 3) : **comme le VB6** — remplir les compositions Q1 et Q2 dès que l’une des deux qualités
+  est trouvée (onglet « Couche de surface » actif), même pour la qualité non trouvée.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-etude (Lot 5 : Orchestrateur d'étude)
+- Fait :
+  1. Implémentation de l'orchestrateur complet dans `structurb-python/structurb/etude.py` et export dans `structurb/__init__.py` :
+     - `TYPES_STRUCTURE` (`Souple=1 .. PavesDalles=6`, `ModuleMain.bas` l. 171-176) et `structures_compatibles` (`RemplirComboStructures`, filtrage par type de voie, famille de structure et matériaux exclus).
+     - `compositions_surface_compatibles` (`MettreAJourOngletCoucheSurface`, filtrage des compositions d'un `MateriauCompose` par épaisseur préconisée).
+     - `dimensionner_etude` : enchaînement complet `trafic_cumule` -> `cam_preconise` (couplé à `type_structure`) -> `ne_equivalent` -> `rechercher_epaisseur` -> compositions de surface -> `indice_gel_reference` / `indice_gel_admissible` / `chaussee_verifiee_au_gel` (avec option `fidele_vb6`).
+  2. Tests dans `structurb-python/tests/test_etude.py` (3 fonctions : filtrage par type de voie / structure / exclusion de matériau, étude complète `Pavés/GNT` avec vérification au gel `fidele_vb6=True/False`, et matériau composé `Enrobés` + cas hors plage).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_etude.py` : **3 / 3** tests passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Relecture et exécution de `python -m pytest -q` (suite complète) par Claude.
+- À relire par Claude :
+  - `structurb-python/structurb/etude.py`, `structurb-python/tests/test_etude.py`, `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Souhaitez-vous ensuite ajouter la lecture/écriture des fichiers `.urb` (`ModuleFichier.bas`) ou l'option « méthode simplifiée NF P 98-086 (2019) » (`Kcr = 0,7`) ?
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture de claude/option-gel-epaisseurs (9ed2ca2, 700531d)
 - Vérifié :
   - `epaisseurs_pour_gel(qualite, fidele_vb6=True)` (`structurb/epaisseur.py`, exportée dans `structurb/__init__.py`) :
