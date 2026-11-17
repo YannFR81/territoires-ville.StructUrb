@@ -38,6 +38,7 @@ class ResultatQualite:
 
     Attention : c'est ce tableau, avec le lit de pose et les 3 cm d'affichage, que le VB6
     passe ensuite à ``CalculerIndiceGelAdm`` (voir ``gel.indice_gel_admissible``).
+    Pour choisir les épaisseurs du calcul au gel, utiliser ``epaisseurs_pour_gel``.
     """
 
     epaisseurs: Tuple[int, int, int, int, int, int]
@@ -131,6 +132,38 @@ def _resultat_qualite(
         max_pratique=ligne.max_pratique,
         trouvee=ligne.max_pratique.upper() != "OUI",
         ligne=ligne,
+    )
+
+
+def epaisseurs_pour_gel(
+    qualite: ResultatQualite, fidele_vb6: bool = True
+) -> Tuple[int, int, int, int, int, int]:
+    """Épaisseurs (cm) à passer à ``gel.indice_gel_admissible`` pour une qualité.
+
+    - ``fidele_vb6=True`` (par défaut) : comme le VB6, qui passe ``monTabEp`` tel quel à
+      ``CalculerIndiceGelAdm``. Le lit de pose des pavés et dalles (4 cm) et les 3 cm
+      d'affichage d'une couche de surface « sans épaisseur » entrent donc dans le calcul.
+    - ``fidele_vb6=False`` : épaisseurs du catalogue seules (surface lue dans la grille,
+      pas de lit de pose). Option ajoutée par décision de YannFR81 du 2026-11-17 ;
+      ce n'est pas un comportement du VB6.
+
+    Avec le catalogue Certu, seules les 20 structures en pavés ou dalles changent :
+    la seule couche « sans épaisseur » est l'enduit superficiel (ES), dont Agel et Bgel
+    sont nuls. Les 3 cm comptent seulement avec un catalogue personnel.
+
+    Réf. VB6 : ``ModuleMain.bas :: RechercherEpaisseur`` (lignes 2675-2794) et
+    ``CalculerIndiceGelAdm`` (lignes 2537-2642).
+    """
+    if fidele_vb6:
+        return qualite.epaisseurs
+    lig = qualite.ligne
+    return (
+        lig.epaisseur_surface,
+        0,
+        lig.epaisseur_base_1,
+        lig.epaisseur_base_2,
+        lig.epaisseur_fondation_1,
+        lig.epaisseur_fondation_2,
     )
 
 
