@@ -44,8 +44,12 @@ Tranche 2"`) ; une **ligne vide** du titre disparaît (filtre `if l.strip()`).
      sans nom de couche ni matériau. Pour un dossier, préférer les épaisseurs du catalogue, avec les couches et matériaux nommés.
      Remplacer les formules LaTeX (`$I_{	ext{adm}}$`) par du texte simple.
   6. Le README cite l’option `norme_2019`, qui n’existe que sur `gemini/lot-norme-2019` : fusionner cette branche d’abord.
-- Verdict : **À CORRIGER** (points 1 et 2).
-- Question pour YannFR81 : pouvez-vous fournir un ou deux fichiers `.urb` réels (anonymisés), avec un titre sur deux lignes ?
+- Verdict : **À CORRIGER** (point 1).
+- Réponse de YannFR81 : **pas de fichier `.urb` réel disponible**. `Struct-Urb.exe` ne démarre pas sur ce poste : ses contrôles
+  VB6 (`COMDLG32.OCX`, `TABCTL32.OCX`, `ss32x25.ocx`, `MSMASK32.OCX`, `RICHTX32.OCX`…) ne sont pas installés ; seul
+  l’installateur d’origine du Cerema les enregistre. Le point 2 passe donc **en suspens** (non bloquant) : écrire dans la
+  docstring de `lire_urb` que le format est vérifié d’après le code VB6 seulement, et ajouter un fichier réel dès qu’il existe.
+  Pour le point 1, suivre la sémantique de `Write #` : une chaîne entre guillemets peut contenir des retours à la ligne.
 
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-urb (Lot 7 : .urb, Note de calcul & README)
 - Fait :
