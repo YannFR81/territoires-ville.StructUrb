@@ -16,6 +16,84 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Claude — relecture des correctifs du lot 7 .urb (a63002f, branche gemini/lot-urb)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **132 / 132**.
+  - Point 1 : lecture du fichier comme un flux CSV (une chaîne entre guillemets peut contenir des retours à la ligne).
+    Aller-retour vérifié pour un titre vide, simple, sur deux lignes, avec ligne vide, avec virgule ; et lecture d’un fichier
+    écrit comme le VB6 (CRLF dans le titre, coefficient écrit `.12`, pente vide) : conforme.
+  - Point 3 : écriture en CRLF partout, y compris dans le titre.
+  - Point 4 : ambiguïté du numéro 69 documentée. Point 5 : note de calcul avec couches et matériaux nommés,
+    épaisseurs du catalogue, sans LaTeX.
+  - Point 2 : en suspens (pas de `.urb` réel), comme décidé.
+- Verdict : **BON POUR FUSION** de la part de Claude, après `gemini/lot-norme-2019`.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-urb (correctifs relecture Claude)
+- Fait :
+  1. `lire_urb` (`structurb/urb.py`) : lecture en flux `csv.reader` complet (au lieu d'un découpage ligne par ligne) — gère les titres multi-lignes avec lignes vides sans guillemet parasite.
+  2. `ecrire_urb` : écriture explicite avec `newline="\r\n"` (CRLF garanti quel que soit l'OS).
+  3. `EtudeUrb` : docstring complétée sur l'ambiguïté de `num_index_structure` (doublon `69`) et le rôle de `combo_struct_idx`.
+  4. `formater_note_calcul` : affichage des épaisseurs du catalogue avec noms de couches et matériaux (`Surface (...)`, `Base (...)`, `Fondation (...)`) et texte simple (`I_ref`, `I_adm`) sans LaTeX brut.
+  5. `tests/test_urb.py` : test multi-ligne avec ligne vide (`"Giratoire RD 12\n\nAménagement entrée Nord"`) et vérification de la note de calcul sans LaTeX.
+- Vérifié (tests, cas de référence) :
+  - `tests/test_urb.py` : **4 / 4** tests passés sous Python 3.9 (via shim `pytest`).
+- En suspens :
+  - Point 2 de la relecture de Claude : ajout d'un fichier `.urb` réel (anonymisé) saisi dans `Struct-Urb.exe` dès que disponible.
+  - Contre-relecture des correctifs par Claude sur `gemini/lot-norme-2019` (`078347d`) et `gemini/lot-urb` (ce commit).
+- À relire par Claude :
+  - `structurb-python/structurb/urb.py` et `structurb-python/tests/test_urb.py`.
+- Question pour YannFR81 :
+  - Avez-vous un fichier `.urb` réel (ou voulez-vous en enregistrer un rapide dans `Struct-Urb.exe`, avec un titre sur 2 lignes) pour valider le point 2 ?
+
+## 2026-11-17 — Claude — relecture du lot 7 .urb et note de calcul (eae4804, branche gemini/lot-urb)
+- Vérifié :
+  - `python -m pytest -q` (vrai pytest, Python 3.9) : **132 / 132**.
+  - Ordre et types des champs comparés à `EcrireDansFichier` et `OuvrirEtude` (`ModuleFichier.bas`) : 11 lignes + ligne
+    d’indice personnel (absente en v1.0 bêta), codage `ChantierDifficile = 100` pour Q2, indices des matériaux écrits
+    `" n "`, pente gardée en texte (vide ou valeur infinie possibles) : conforme.
+  - Écriture : fins de ligne CRLF sous Windows.
+- **À corriger (bloquant)** :
+  1. Titre sur plusieurs lignes : le lecteur découpe le fichier ligne par ligne, puis lit chaque ligne comme du CSV.
+     Un titre écrit entre guillemets sur plusieurs lignes revient avec un **guillemet en trop**
+     (`"Rue des Lilas
+Tranche 2"` → `Rue des Lilas
+Tranche 2"`) ; une **ligne vide** du titre disparaît (filtre `if l.strip()`).
+     Lire le fichier comme un flux de champs, à la manière d’`Input #`, et non ligne par ligne.
+  2. Aucun fichier `.urb` produit par le vrai Struct-Urb dans les tests : le format n’est vérifié que contre son propre écrivain.
+     Ajouter au moins un `.urb` réel (anonymisé) saisi dans `Struct-Urb.exe`, si possible avec un titre sur deux lignes,
+     pour fixer la façon dont `Input #` lit un titre multi-ligne (concaténation sans séparateur dans `OuvrirEtude`).
+- À corriger (non bloquant) :
+  3. Écrire avec `newline="
+"` explicitement (sinon LF hors Windows).
+  4. `num_index_structure` n’est relié à aucune structure. À la réouverture, le VB6 prend la **première** structure dont
+     `monNumIndex` correspond ; or le numéro 69 est porté par `Enrobés/GLg-T2` (position 34) **et** `Dalles/BC5` (position 66) :
+     une étude enregistrée sur ce `Dalles/BC5` se rouvre en VB6 sur `Enrobés/GLg-T2`. Si une fonction de réouverture est ajoutée,
+     s’appuyer plutôt sur `combo_struct_idx` ou signaler l’ambiguïté.
+  5. Note de calcul : elle affiche le tableau `monTabEp` (3 cm « d’affichage » pour une surface sans épaisseur, lit de pose)
+     sans nom de couche ni matériau. Pour un dossier, préférer les épaisseurs du catalogue, avec les couches et matériaux nommés.
+     Remplacer les formules LaTeX (`$I_{	ext{adm}}$`) par du texte simple.
+  6. Le README cite l’option `norme_2019`, qui n’existe que sur `gemini/lot-norme-2019` : fusionner cette branche d’abord.
+- Verdict : **À CORRIGER** (point 1).
+- Réponse de YannFR81 : **pas de fichier `.urb` réel disponible**. `Struct-Urb.exe` ne démarre pas sur ce poste : ses contrôles
+  VB6 (`COMDLG32.OCX`, `TABCTL32.OCX`, `ss32x25.ocx`, `MSMASK32.OCX`, `RICHTX32.OCX`…) ne sont pas installés ; seul
+  l’installateur d’origine du Cerema les enregistre. Le point 2 passe donc **en suspens** (non bloquant) : écrire dans la
+  docstring de `lire_urb` que le format est vérifié d’après le code VB6 seulement, et ajouter un fichier réel dès qu’il existe.
+  Pour le point 1, suivre la sémantique de `Write #` : une chaîne entre guillemets peut contenir des retours à la ligne.
+
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-urb (Lot 7 : .urb, Note de calcul & README)
+- Fait :
+  1. Lecture/écriture des fichiers d'étude `*.urb` (`structurb/urb.py`, exportée dans `structurb/__init__.py`) :
+     - `EtudeUrb`, `lire_urb` et `ecrire_urb` fidèles au format VB6 `Write #` / `Input #` (`ModuleFichier.bas` l. 6-308, encodage `cp1252`, v1.0 bêta / v1.0 finale / v2.0, codage `ChantierDifficile = 100` pour Q2, titre multi-lignes jusqu'à `###FinTitre###`).
+  2. Générateur de note de calcul Markdown `formater_note_calcul(etude, resultat, structure=None)` (trafic, NE, coupe Q1/Q2, vérification au gel).
+  3. Documentation `structurb-python/README.md` avec vue d'ensemble des 6 modules et exemple complet.
+  4. Tests dans `structurb-python/tests/test_urb.py` (4 fonctions : aller-retour `.urb` v2 avec Q2 et indice perso, lecture v1 bêta sans dernière ligne, erreurs d'en-tête/fichier absent, génération de note de calcul).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_urb.py` : **4 / 4** tests passés sous Python 3.9 (via shim `pytest` + `tempfile.TemporaryDirectory`).
+- En suspens :
+  - Relecture par Claude des deux branches prêtes : `gemini/lot-norme-2019` (`34ecbc4`) et `gemini/lot-urb` (ce commit).
+- À relire par Claude :
+  - `structurb-python/structurb/urb.py`, `structurb-python/tests/test_urb.py`, `structurb-python/README.md`, `structurb-python/structurb/__init__.py`.
+
 ## 2026-11-17 — Claude — relecture des correctifs de l’option norme 2019 (078347d, branche gemini/lot-norme-2019)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **130 / 130**.
@@ -76,6 +154,7 @@ Modèle d'entrée :
   - Relecture et exécution de `python -m pytest -q` par Claude.
 - À relire par Claude :
   - `structurb-python/structurb/gel.py`, `structurb-python/tests/test_gel.py`, `structurb-python/structurb/__init__.py`.
+
 - Question pour YannFR81 :
   - Aucune.
 
