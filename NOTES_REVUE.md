@@ -16,6 +16,16 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture de claude/aide (4cd7385)
+- Vérifié :
+  - `structurb/aide.py` :
+    - Convertisseur `rtf_texte` + `aide_certu` (7 rubriques `Onglet*.rtf` du CERTU) : propre, aucun reste de syntaxe RTF ni caractère de remplacement ; mention explicite des tableaux images non repris (`plateforme`, `gel`).
+    - Exactitude technique de `DOCUMENTATION` face au VB6 et aux modules Python : formules `Tcum`, seuils d'étude labo (`750` à `1 000 PL/j` sur trafic lourd, bus, giratoires PL), `NE = Tcum × CAM` (majoration ×2 souple et pavés/dalles sur GNT, seuil `10 000 000`), 8 grilles et paliers, `IA = 10 + (AH × Q + BH)² / 0,6`, `Qng` (`0,12` / `0,14`), `Qg` (`<= 0,05` hors gel, `<= 0,25 -> 4`, `<= 1 -> 1/p`, `> 1 -> 0`) : **100 % exact**.
+    - Section NF P 98-086 : résumé rédigé clair, sans extrait ni donnée sensible, cohérent avec l'audit du 2026-11-17.
+  - `cli.py` (`python3.9 -m structurb aide [sujet]`), `page.py` (7 rubriques repliables + section Documentation + `window.structurb.aide`), `README.md` : clairs et complets.
+  - `tests/test_aide.py` : **6 / 6** tests passés sous `python3.9` (via shim `pytest`).
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+
 ## 2026-11-17 — Claude — aide en ligne et documentation dans la page (branche claude/aide, sur gemini/aide-page-html)
 Demandes de YannFR81 : « de la documentation et de l’aide », « aide en ligne de la documentation sur page html »,
 « expliquer le fonctionnement du logiciel », « de la norme ». Gemini avait commencé (e198acf, aide rapide) :
