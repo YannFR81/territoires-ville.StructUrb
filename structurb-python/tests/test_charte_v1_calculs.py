@@ -217,3 +217,28 @@ def test_valeurs_par_defaut_croissance_1_et_norme_2019_false(tmp_path):
     html = f.read_text(encoding="utf-8")
     assert 'id="champ-croissance_pct" name="croissance_pct" type="number" min="0" max="5" step="1" value="1"' in html
     assert '<input id="champ-norme_2019" name="norme_2019" type="checkbox">' in html
+
+
+# --- 6. Grave-émulsion (GE) au gel : fidélité VB6 (IA = 17 sur ES/GE) -------
+
+def test_grave_emulsion_gel_fidele_vb6(catalogues):
+    """Dans le VB6 (CalculerIndiceGelAdm, l. 2589-2625), GE a a_gel=0 et b_gel=0 dans Certu.str.
+    Pour ES/GE avec pente=0,5 (et qm=0, sans couche de forme), IA = 17 °C·j."""
+    cat_str, cat_mts = catalogues
+    ge = cat_str.obtenir_materiau_bf("GE")
+    assert (ge.a_gel, ge.b_gel) == (0.0, 0.0)
+
+    es_ge = cat_str.structures[2]
+    assert es_ge.abrege.strip() == "ES/GE"
+    res = dimensionner_etude(
+        cat_str, cat_mts, es_ge,
+        type_voie="desserte",
+        trafic_initial_pl=12,
+        croissance_pct=1,
+        duree_ans=20,
+        plate_forme="PF2",
+        station="Toulouse",
+        pente_sol_pourcent=0.5,
+    )
+    assert res.gel_q1 is not None
+    assert res.gel_q1.indice_gel_adm == 17
