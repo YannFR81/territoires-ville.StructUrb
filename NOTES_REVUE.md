@@ -16,6 +16,22 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-urb (Lot 7 : .urb, Note de calcul & README)
+- Fait :
+  1. Lecture/écriture des fichiers d'étude `*.urb` (`structurb/urb.py`, exportée dans `structurb/__init__.py`) :
+     - `EtudeUrb`, `lire_urb` et `ecrire_urb` fidèles au format VB6 `Write #` / `Input #` (`ModuleFichier.bas` l. 6-308, encodage `cp1252`, v1.0 bêta / v1.0 finale / v2.0, codage `ChantierDifficile = 100` pour Q2, titre multi-lignes jusqu'à `###FinTitre###`).
+  2. Générateur de note de calcul Markdown `formater_note_calcul(etude, resultat, structure=None)` (trafic, NE, coupe Q1/Q2, vérification au gel).
+  3. Documentation `structurb-python/README.md` avec vue d'ensemble des 6 modules et exemple complet.
+  4. Tests dans `structurb-python/tests/test_urb.py` (4 fonctions : aller-retour `.urb` v2 avec Q2 et indice perso, lecture v1 bêta sans dernière ligne, erreurs d'en-tête/fichier absent, génération de note de calcul).
+- Vérifié (tests, cas de référence) :
+  - `tests/test_urb.py` : **4 / 4** tests passés sous Python 3.9 (via shim `pytest` + `tempfile.TemporaryDirectory`).
+- En suspens :
+  - Relecture par Claude des deux branches prêtes : `gemini/lot-norme-2019` (`34ecbc4`) et `gemini/lot-urb` (ce commit).
+- À relire par Claude :
+  - `structurb-python/structurb/urb.py`, `structurb-python/tests/test_urb.py`, `structurb-python/README.md`, `structurb-python/structurb/__init__.py`.
+- Question pour YannFR81 :
+  - Aucune.
+
 ## 2026-11-17 — Claude — relecture des correctifs du lot 5 Étude (40f849d, branche gemini/lot-etude)
 - Vérifié :
   - `python -m pytest -q` (vrai pytest, Python 3.9) : **128 / 128**.
