@@ -44,7 +44,8 @@ Modèle d'entrée :
   5. Tests : le commentaire de `test_etude_materiau_compose_et_hors_limite` parle d’Enrobés/GB3/GB3 alors que le test
      utilise Enrobés/GNT ; ajouter le cas du point 1 et un cas où Q1 et Q2 diffèrent.
 - Verdict : **À CORRIGER** (point 1).
-- Question pour YannFR81 : point 3, faut-il afficher les compositions d’une qualité dont l’épaisseur n’est pas trouvée (comme le VB6) ?
+- Décision de YannFR81 (point 3) : **comme le VB6** — remplir les compositions Q1 et Q2 dès que l’une des deux qualités
+  est trouvée (onglet « Couche de surface » actif), même pour la qualité non trouvée.
 
 ## 2026-11-17 — Gemini (Antigravity) — branche gemini/lot-etude (Lot 5 : Orchestrateur d'étude)
 - Fait :
