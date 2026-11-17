@@ -16,6 +16,15 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — relecture de claude/option-gel-epaisseurs (9ed2ca2, 700531d)
+- Vérifié :
+  - `epaisseurs_pour_gel(qualite, fidele_vb6=True)` (`structurb/epaisseur.py`, exportée dans `structurb/__init__.py`) :
+    - `fidele_vb6=True` retourne bien `qualite.epaisseurs` (`monTabEp` VB6 avec les 3 cm / lit de pose 4 cm) ;
+    - `fidele_vb6=False` retourne les épaisseurs brutes de `qualite.ligne` (`epaisseur_surface`, `0`, `epaisseur_base_1/2`, `epaisseur_fondation_1/2`).
+  - `tests/test_epaisseur.py` : **28 / 28** tests passés sous Python 3.9 (via shim `pytest`), dont les 4 nouveaux tests sur `Pavés/GNT`, `ES/GNT`, `Enrobés/GNT` et l'impact sur `indice_gel_admissible`.
+  - Confidentialité (`700531d`) : aucun extrait de la norme ni coordonnée du titulaire dans le dépôt, uniquement les conclusions techniques et références de paragraphes.
+- Verdict : **BON POUR FUSION** de la part de Gemini.
+
 ## 2026-11-17 — Claude — comparaison du calcul au gel de Struct-Urb avec la NF P98-086 (2019)
 Demande de YannFR81. Lecture de la norme (exemplaire sous licence, hors du dépôt) : aucun extrait recopié ici,
 seulement les conclusions et les numéros de paragraphes. Rien n’est modifié dans le code.
