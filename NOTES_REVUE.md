@@ -16,6 +16,20 @@ Modèle d'entrée :
 
 ---
 
+## 2026-11-17 — Gemini (Antigravity) — branche gemini/charte-v1-calculs (§ 6 de CHARTE_V1.md)
+- Fait (un commit par point, tests écrits avant le code, aucun cas de référence existant modifié) :
+  1. Giratoires (`epaisseur.py`, `rapport.py`, `page.py`, `dxf.py`) : les grilles Q2 vides (toutes épaisseurs à 0 dans `Certu.str`) donnent `trouvee=False` et `couches=[]` dans le JSON (`donnees_note`) ; pas de choix Q1/Q2 en giratoire et affichage « Q2 : sans objet (giratoire) » dans la note HTML, le résumé et le DXF (`frmDocument.frm` l. 4127, `frmImprimer.frm` l. 653, `ModuleMain.bas :: AfficherCarottes` l. 1750-1751).
+  2. `PF1` refusée en giratoire (`etude.py :: dimensionner_etude`, `page.py`) : lève `ValueError` avec message clair et désactive `PF1` dans le formulaire HTML (`frmDocument.frm`, l. 2985-2989).
+  3. Plages de trafic et `ne_hors_limite` (`etude.py`, `rapport.py`, `page.py`) : vérifié `ModuleSaisie.bas :: VerifierMinMaxTraficIni` (l. 51-103) et `ModuleMain.bas :: DonnerMinMaxTraficIni` (l. 2183-2210) ; `dimensionner_etude` refuse tout trafic hors domaine toléré ; le formulaire HTML borne la saisie à `1–30` (desserte), `20–170` (distribution), `120–1000` (principale), `1–1000` (bus) ; `ne_hors_limite = True` dès que `NE > structure.nb_essieux_max`.
+  4. Durée de service 5 à 50 ans (`etude.py`, `page.py`) : validation `5 <= duree_ans <= 50` dans `dimensionner_etude`, `_calculer`, `OUTIL` et `<input id="champ-duree_ans">` (`ModuleSaisie.bas :: VerifierMinMaxDuréeService`, l. 105-125).
+  5. Valeurs par défaut (`page.py`) : `croissance_pct` à `1` % par défaut (HTML, API et schéma `OUTIL`), case `norme_2019` (`Kcr = 0,7`) décochée par défaut.
+  6. Grave-émulsion (`GE`) au gel (`test_charte_v1_calculs.py`) : vérifié dans `ModuleMain.bas :: CalculerIndiceGelAdm` (l. 2583-2641) et `Certu.str` / `Certu.mts` que `GE` vaut `a_gel=0,0`, `b_gel=0,0` sans exception VB6 ; sur `ES/GE` avec pente `0,5`, `IA = 17 °C·j` (uniquement `Qg`). Aucun calcul modifié.
+  7. Non-régression de la notice Struct-Urb 2.1 : `d = 20 ans`, `t = 1 %`, MJA `1/12/25/100/150/500/1000` (`NPL = 365 × MJA × 21,9`).
+- Vérifié : `python -m pytest -q` : **220 passed** (`tests/test_charte_v1_calculs.py` : 27 cas + 193 tests existants tous verts).
+- En suspens : néant.
+- À relire par Claude : ensemble de la branche `gemini/charte-v1-calculs` (7 commits + `NOTES_REVUE.md`).
+- Question pour YannFR81 : Dans `Certu.str`, la grave-émulsion (`GE`) a `a_gel = 0` et `b_gel = 0` (d’où `IA = 17 °C·j` sur `ES/GE` avec pente `0,5`, dû uniquement à `Qg`, exactement comme dans le VB6). Souhaitez-vous conserver cette fidélité au VB6, ou ajouter ultérieurement des coefficients thermiques NF P98-086 pour `GE` sous l’option `norme_2019=True` ?
+
 ## 2026-11-17 — Gemini (Antigravity) — relecture de claude/charte-signature (b313d54 + fb6ce08), PR n° 4
 (Relecture transmise par YannFR81, reportée ici par Claude.)
 - Vérifié :
